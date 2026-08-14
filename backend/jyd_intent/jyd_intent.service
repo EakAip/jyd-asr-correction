@@ -1,0 +1,17 @@
+[Unit]
+Description=JYD Intent Service
+After=network.target
+
+[Service]
+Type=simple
+User=wzhpc
+WorkingDirectory=/opt/jyd01/wangruihua/AI_Tutor
+Environment="PATH=/home/wzhpc/miniconda3/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/wzhpc/miniconda3/bin/python /opt/jyd01/wangruihua/AI_Tutor/jyd_intentV1.py
+StandardOutput=append:/opt/jyd01/wangruihua/AI_Tutor/logs/8024.log
+StandardError=append:/opt/jyd01/wangruihua/AI_Tutor/logs/8024.log
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
