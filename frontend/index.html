@@ -1,0 +1,4336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>JYD—ASR语音转写实时纠错系统</title>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #1557b0;
+            --primary-light: #e8f0fe;
+            --accent: #00b4d8;
+            --success: #0d9488;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+            --bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow: 0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.03);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.04);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --transition: 0.2s ease;
+
+            /* ---- 主题化令牌：浅色（深色见下方 [data-theme="dark"]） ---- */
+            --body-bg: linear-gradient(135deg, #e8edf5 0%, #f0f4f8 30%, #eaf0f9 60%, #f5f7fb 100%);
+            --header-bg: linear-gradient(135deg, #0c4a6e 0%, #1a73e8 50%, #0891b2 100%);
+            --header-shadow: rgba(26, 115, 232, 0.25);
+
+            --surface-raised: #ffffff;   /* 卡片/弹窗等抬升表面 */
+            --surface-2: #fafbfc;        /* 头部条、次级区块 */
+            --surface-3: #f1f5f9;        /* 表头、hover 底色 */
+            --input-bg: #f8fafc;         /* 输入框/胶囊默认底 */
+            --border-strong: #94a3b8;    /* hover 时的描边 */
+            --divider: #f1f5f9;          /* 分段虚线 */
+            --text-muted: #94a3b8;       /* 占位/提示文字 */
+            --text-interim: #64748b;     /* 中间态转写文字 */
+
+            --overlay: rgba(15, 23, 42, 0.55);
+            --overlay-shadow: rgba(0,0,0,0.25);
+            --panel-border: #bae6fd;
+            --toast-bg: #0f172a;
+
+            --success-bg: #ecfdf5;
+            --success-text: #059669;
+            --danger-bg: #fef2f2;
+            --danger-border: #fecaca;
+
+            --upload-border: #cbd5e1;
+            --upload-bg: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            --upload-bg-hover: linear-gradient(135deg, #eef4ff 0%, #e8f0fe 100%);
+            --upload-bg-file: linear-gradient(135deg, #ecfdf5 0%, #f0fdf6 100%);
+            --file-card-border: #d1fae5;
+
+            --summary-dot: #22c55e;
+            --summary-bg: #faf5ff;
+            --summary-border: #e9d5ff;
+            --summary-header-bg: #f3e8ff;
+            --summary-header-text: #6d28d9;
+            --summary-accent: #7c3aed;
+            --summary-strong: #4c1d95;
+            --summary-heading: #5b21b6;
+            --summary-code-bg: #f1e8ff;
+
+            --intent-chip-bg: #e0f2fe;
+            --intent-chip-text: #0369a1;
+            --intent-chip-border: #bae6fd;
+            --intent-chip-hover: #f0f9ff;
+            --intent-chip-hover-border: #7dd3fc;
+
+            --code-bg: #0f172a;
+            --code-text: #e2e8f0;
+            --code-inline-bg: #f1f5f9;
+            --code-inline-text: #b91c1c;
+            --doc-td-code-bg: #eef2ff;
+            --doc-td-code-text: #4338ca;
+            --note-bg: #eff6ff;
+            --note-text: #1e40af;
+            --warn-bg: #fffbeb;
+            --warn-text: #92400e;
+        }
+
+        /* ========== 深色模式 ========== */
+        [data-theme="dark"] {
+            --primary: #4d94ff;
+            --primary-dark: #7db3ff;
+            --primary-light: #16304d;
+            --accent: #22d3ee;
+            --success: #2dd4bf;
+            --danger: #f87171;
+            --warning: #fbbf24;
+
+            --bg: #0b1220;
+            --card-bg: #131c2e;
+            --text: #e6edf7;
+            --text-secondary: #94a3b8;
+            --border: #263449;
+
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.4);
+            --shadow: 0 4px 6px rgba(0,0,0,0.45), 0 2px 4px rgba(0,0,0,0.3);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.55), 0 4px 10px rgba(0,0,0,0.4);
+
+            --body-bg: linear-gradient(135deg, #0a1120 0%, #0b1220 30%, #0c1526 60%, #0a1120 100%);
+            --header-bg: linear-gradient(135deg, #06243a 0%, #10416f 50%, #0b4a5c 100%);
+            --header-shadow: rgba(0, 0, 0, 0.45);
+
+            --surface-raised: #131c2e;
+            --surface-2: #16203a;
+            --surface-3: #1d2942;
+            --input-bg: #0f1829;
+            --border-strong: #48597a;
+            --divider: #22304a;
+            --text-muted: #7c8ba5;
+            --text-interim: #9aa9c2;
+
+            --overlay: rgba(3, 7, 15, 0.72);
+            --overlay-shadow: rgba(0,0,0,0.65);
+            --panel-border: #24557d;
+            --toast-bg: #1d2942;
+
+            --success-bg: #0c2b28;
+            --success-text: #34d399;
+            --danger-bg: #33161a;
+            --danger-border: #5b2429;
+
+            --upload-border: #3b4a66;
+            --upload-bg: linear-gradient(135deg, #101a2b 0%, #16203a 100%);
+            --upload-bg-hover: linear-gradient(135deg, #132340 0%, #16304d 100%);
+            --upload-bg-file: linear-gradient(135deg, #0c2b28 0%, #0e2f2a 100%);
+            --file-card-border: #1e4d45;
+
+            --summary-dot: #4ade80;
+            --summary-bg: #1d1633;
+            --summary-border: #3c2a63;
+            --summary-header-bg: #271c45;
+            --summary-header-text: #c4b5fd;
+            --summary-accent: #a78bfa;
+            --summary-strong: #ddd6fe;
+            --summary-heading: #c4b5fd;
+            --summary-code-bg: #2a1f47;
+
+            --intent-chip-bg: #0d2b40;
+            --intent-chip-text: #7dd3fc;
+            --intent-chip-border: #24557d;
+            --intent-chip-hover: #123a55;
+            --intent-chip-hover-border: #38bdf8;
+
+            --code-bg: #080e1a;
+            --code-text: #cbd5e1;
+            --code-inline-bg: #1d2942;
+            --code-inline-text: #fca5a5;
+            --doc-td-code-bg: #1b2145;
+            --doc-td-code-text: #a5b4fc;
+            --note-bg: #10233f;
+            --note-text: #93c5fd;
+            --warn-bg: #33280d;
+            --warn-text: #fcd34d;
+        }
+
+        /* 让滚动条、audio 播放器等原生控件跟随主题 */
+        :root { color-scheme: light; }
+        [data-theme="dark"] { color-scheme: dark; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+            background: var(--body-bg);
+            min-height: 100vh;
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* ========== Header ========== */
+        .header {
+            background: var(--header-bg);
+            padding: 0;
+            box-shadow: 0 4px 20px var(--header-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .header-icon {
+            width: 42px;
+            height: 42px;
+            background: rgba(255,255,255,0.18);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            backdrop-filter: blur(4px);
+        }
+
+        .header h1 {
+            color: #ffffff;
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        }
+
+        .header-subtitle {
+            color: rgba(255,255,255,0.82);
+            font-size: 0.8rem;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .header-doc-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 118px;
+            height: 38px;
+            padding: 0 18px;
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.16);
+            color: #fff;
+            font-size: 0.85rem;
+            font-weight: 600;
+            line-height: 1;
+            cursor: pointer;
+            transition: all var(--transition);
+            backdrop-filter: blur(4px);
+            white-space: nowrap;
+            font-family: inherit;
+            flex-shrink: 0;
+        }
+        .header-doc-btn:hover {
+            background: rgba(255,255,255,0.28);
+            border-color: rgba(255,255,255,0.6);
+            transform: translateY(-1px);
+        }
+        .header-doc-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* 主题切换（正方形图标按钮，与文档/设置按钮同高） */
+        .theme-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.16);
+            color: #fff;
+            font-size: 1.05rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: all var(--transition);
+            backdrop-filter: blur(4px);
+            font-family: inherit;
+            flex-shrink: 0;
+        }
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.28);
+            border-color: rgba(255,255,255,0.6);
+            transform: translateY(-1px);
+        }
+        .theme-toggle:active { transform: scale(0.94); }
+        .theme-toggle:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+        }
+        /* 图标：浅色模式显示月亮（点击转深色），深色模式显示太阳 */
+        .theme-toggle .icon-moon { display: inline; }
+        .theme-toggle .icon-sun { display: none; }
+        [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+        [data-theme="dark"] .theme-toggle .icon-sun { display: inline; }
+
+        /* ========== Main Container ========== */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 20px 32px;
+            display: flex;
+            gap: 20px;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* ========== Left Panel — Transcription ========== */
+        .left-panel {
+            flex: 1 1 58%;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .transcription-card {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            min-height: 500px;
+            /* 关键：限制面板最大高度不超过视口，文字超长时在内部滚动而非撑长页面 */
+            max-height: calc(100vh - 130px);
+        }
+
+        .transcription-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--surface-2);
+            flex-shrink: 0;
+        }
+
+        .transcription-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.01em;
+        }
+
+        .transcription-title .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .transcription-badge {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 12px;
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .transcription-body {
+            flex: 1;
+            padding: 16px 20px;
+            overflow-y: auto;
+            font-size: 1rem;
+            line-height: 1.9;
+            color: var(--text);
+            white-space: pre-wrap;
+            word-break: break-word;
+            /* 关键：flex 子项需 min-height:0 才能收缩并触发内部滚动，
+               否则内容会把面板一直撑长。用较小的最小高度保证空态观感 */
+            min-height: 0;
+        }
+
+        .transcription-body:empty::after {
+            content: "识别结果将在此实时显示...";
+            color: var(--text-muted);
+            font-style: italic;
+            font-size: 0.95rem;
+        }
+
+        .transcription-body .interim {
+            color: var(--text-interim);
+            font-style: italic;
+        }
+
+        .transcription-body .final {
+            color: var(--text);
+        }
+
+        .transcription-body .segment {
+            margin-bottom: 8px;
+            padding: 6px 0;
+            border-bottom: 1px dashed var(--divider);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========== 纠错特效 ========== */
+
+        /* 被纠正的文字高亮（仅对变化的文字生效） */
+        .text-corrected {
+            display: inline;
+            background: linear-gradient(180deg, transparent 55%, rgba(250, 204, 21, 0.55) 55%);
+            border-radius: 2px;
+            padding: 0 2px;
+            animation: highlightFade 2.5s ease-out forwards;
+            position: relative;
+        }
+
+        @keyframes highlightFade {
+            0%   {
+                background: linear-gradient(180deg, transparent 55%, rgba(250, 204, 21, 0.8) 55%);
+                box-shadow: 0 0 12px rgba(250, 204, 21, 0.5);
+            }
+            30%  {
+                background: linear-gradient(180deg, transparent 55%, rgba(250, 204, 21, 0.7) 55%);
+                box-shadow: 0 0 8px rgba(250, 204, 21, 0.35);
+            }
+            100% {
+                background: linear-gradient(180deg, transparent 55%, transparent 55%);
+                box-shadow: 0 0 0px rgba(250, 204, 21, 0);
+            }
+        }
+
+        /* 徽章纠错脉冲 */
+        .badge-correcting {
+            animation: badgePulse 0.6s ease-in-out 3;
+        }
+
+        @keyframes badgePulse {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.15); }
+        }
+
+        /* ========== Right Panel — Configuration ========== */
+        .right-panel {
+            flex: 0 1 42%;
+            min-width: 380px;
+            max-width: 520px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* ========== Card ========== */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 20px;
+            border: 1px solid var(--border);
+            transition: box-shadow var(--transition);
+            flex-shrink: 0;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            letter-spacing: 0.01em;
+        }
+
+        .card-title .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            flex-shrink: 0;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        /* ========== Form Controls ========== */
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .radio-pill {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .radio-pill input {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .radio-pill span {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            border: 2px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .radio-pill input:checked + span {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .radio-pill:hover span {
+            border-color: var(--border-strong);
+        }
+
+        .radio-pill input:checked + span:hover {
+            border-color: var(--primary);
+        }
+
+        /* ========== Textarea ========== */
+        .input-area {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--input-bg);
+            resize: vertical;
+            transition: all var(--transition);
+            outline: none;
+            line-height: 1.6;
+        }
+
+        .input-area:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26,115,232,0.12);
+            background: var(--surface-raised);
+        }
+
+        /* ========== Hotword Template & Save ========== */
+        .hotword-template-row {
+            display: flex;
+            gap: 8px;
+            align-items: stretch;
+            margin-bottom: 8px;
+        }
+        /* 自定义下拉：支持悬浮删除按钮 */
+        .hw-dropdown {
+            position: relative;
+            flex: 1;
+            min-width: 0;
+        }
+        .hw-dropdown-toggle {
+            width: 100%;
+            padding: 8px 34px 8px 12px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.83rem;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--input-bg);
+            outline: none;
+            cursor: pointer;
+            transition: all var(--transition);
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: relative;
+        }
+        .hw-dropdown-toggle::after {
+            content: '▾';
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            pointer-events: none;
+        }
+        .hw-dropdown-toggle:hover { border-color: var(--border-strong); }
+        .hw-dropdown.open .hw-dropdown-toggle {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26,115,232,0.12);
+            background: var(--surface-raised);
+        }
+
+        .hw-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: var(--surface-raised);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-lg);
+            z-index: 50;
+            max-height: 260px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        .hw-dropdown.open .hw-dropdown-menu { display: block; }
+
+        .hw-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 0.83rem;
+            color: var(--text);
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+        .hw-option:hover { background: var(--primary-light); }
+        .hw-option.selected {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .hw-option.hw-option-add {
+            color: var(--primary);
+            font-weight: 600;
+            border-top: 1px solid var(--border);
+            border-radius: 0;
+            margin-top: 4px;
+        }
+        .hw-option-label {
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .hw-option-del {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            line-height: 1;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+        .hw-option:hover .hw-option-del { display: flex; }
+        .hw-option-del:hover {
+            background: var(--danger-bg);
+            color: var(--danger);
+        }
+
+        .btn-hw {
+            padding: 8px 14px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: var(--input-bg);
+            color: var(--text-secondary);
+            transition: all var(--transition);
+            white-space: nowrap;
+            font-family: inherit;
+            outline: none;
+            flex-shrink: 0;
+        }
+        .btn-hw:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+        .btn-hw:active { transform: scale(0.97); }
+        .btn-hw.btn-hw-danger:hover {
+            border-color: var(--danger);
+            color: var(--danger);
+            background: var(--danger-bg);
+        }
+        .btn-hw:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        .btn-hw:disabled:hover {
+            border-color: var(--border);
+            color: var(--text-secondary);
+            background: var(--input-bg);
+        }
+
+        .hotword-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+            align-items: center;
+        }
+        /* 保存按钮：默认蓝色胶囊（选中态），悬浮变绿 */
+        .btn-hw-save {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border: 2px solid var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+            box-shadow: none;
+        }
+        .btn-hw-save:hover {
+            background: var(--success-bg);
+            border-color: var(--success);
+            color: var(--success);
+            box-shadow: none;
+            transform: none;
+        }
+        .btn-hw-save:active { transform: scale(0.97); }
+        .hotword-saved-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        /* ========== Toast ========== */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--toast-bg);
+            color: #fff;
+            padding: 11px 20px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 90vw;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.success { background: linear-gradient(135deg, #0d9488 0%, #059669 100%); }
+        .toast.error { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
+
+        /* ========== Buttons ========== */
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .btn {
+            padding: 9px 18px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            letter-spacing: 0.02em;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(26,115,232,0.3);
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+            box-shadow: 0 4px 14px rgba(26,115,232,0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(13,148,136,0.3);
+        }
+        .btn-success:hover:not(:disabled) {
+            background: #0f766e;
+            box-shadow: 0 4px 14px rgba(13,148,136,0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(220,38,38,0.3);
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: #b91c1c;
+            box-shadow: 0 4px 14px rgba(220,38,38,0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            filter: grayscale(30%);
+            transform: none !important;
+        }
+
+        /* ========== Server Address ========== */
+        .server-addr-compact {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+            color: var(--text);
+            background: var(--surface-raised);
+            outline: none;
+            transition: all var(--transition);
+            margin-top: 0;
+        }
+        .server-addr-compact:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26,115,232,0.1);
+            background: var(--surface-raised);
+        }
+        .server-addr-compact:hover {
+            border-color: var(--border-strong);
+        }
+
+        /* ========== Connect Button (inline with address) ========== */
+        .btn-connect {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: linear-gradient(135deg, #1a73e8 0%, #0891b2 100%);
+            color: #fff;
+            white-space: nowrap;
+            flex-shrink: 0;
+            transition: all var(--transition);
+            letter-spacing: 0.02em;
+            font-family: inherit;
+            outline: none;
+            box-shadow: 0 2px 8px rgba(26,115,232,0.3);
+        }
+        .btn-connect:hover:not(:disabled) {
+            box-shadow: 0 4px 16px rgba(26,115,232,0.45);
+            transform: translateY(-1px);
+        }
+        .btn-connect:active:not(:disabled) {
+            transform: scale(0.97);
+        }
+        .btn-connect:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            filter: grayscale(30%);
+            transform: none !important;
+        }
+
+        /* ========== Action Buttons 50/50 ========== */
+        .btn-group-5050 {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .btn-group-5050 .btn {
+            flex: 1;
+            justify-content: center;
+            padding: 11px 0;
+            font-size: 0.88rem;
+        }
+
+        /* ========== Compact status text ========== */
+        .status-text {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            min-height: 18px;
+            line-height: 1.4;
+            padding-left: 2px;
+        }
+
+        /* ========== Audio Player ========== */
+        .audio-section {
+            margin-top: 6px;
+        }
+
+        .audio-section audio {
+            width: 100%;
+            border-radius: var(--radius-sm);
+            outline: none;
+            height: 36px;
+        }
+
+        /* ========== Footer ========== */
+        .footer {
+            text-align: center;
+            padding: 16px 20px;
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            border-top: 1px solid var(--border);
+            margin-top: 8px;
+        }
+
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ========== File Upload ========== */
+        .file-upload-zone {
+            position: relative;
+            border: 2px dashed var(--upload-border);
+            border-radius: var(--radius);
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            background: var(--upload-bg);
+            overflow: hidden;
+        }
+        .file-upload-zone::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at center, rgba(26,115,232,0.04) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .file-upload-zone:hover {
+            border-color: var(--primary);
+            background: var(--upload-bg-hover);
+            box-shadow: 0 0 0 4px rgba(26,115,232,0.06);
+        }
+        .file-upload-zone:hover::before {
+            opacity: 1;
+        }
+        .file-upload-zone.has-file {
+            border-color: var(--success);
+            border-style: solid;
+            background: var(--upload-bg-file);
+            padding: 16px 20px;
+        }
+        .file-upload-zone.has-file:hover {
+            border-color: var(--success);
+            box-shadow: 0 0 0 4px rgba(13,148,136,0.06);
+        }
+
+        .file-upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .upload-icon {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            transition: transform 0.25s ease;
+            position: relative;
+            z-index: 1;
+        }
+        .file-upload-zone:hover .upload-icon {
+            transform: translateY(-3px);
+        }
+        .upload-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 4px;
+            position: relative;
+            z-index: 1;
+        }
+        .upload-hint {
+            font-size: 0.74rem;
+            color: var(--text-muted);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* File card (selected state) */
+        .file-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--surface-raised);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--file-card-border);
+            margin-top: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .file-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #0d9488 0%, #059669 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            color: #fff;
+        }
+        .file-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .file-card-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .file-card-meta {
+            font-size: 0.72rem;
+            color: var(--text-interim);
+            margin-top: 2px;
+        }
+        .file-card-status {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--success-text);
+            background: var(--success-bg);
+            padding: 4px 10px;
+            border-radius: 12px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* ========== File Result Area ========== */
+        .file-result-area {
+            margin-top: 14px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background: var(--surface-2);
+        }
+        .file-result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-2);
+        }
+        .file-result-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 0.01em;
+        }
+        .file-result-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 10px;
+            background: var(--primary-light);
+            color: var(--primary);
+            white-space: nowrap;
+        }
+        .file-result-body {
+            min-height: 120px;
+            max-height: 360px;
+            padding: 12px 14px;
+            overflow-y: auto;
+            font-size: 0.95rem;
+            line-height: 1.9;
+            color: var(--text);
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: var(--surface-raised);
+        }
+        .file-result-body:empty::after {
+            content: "等待转写结果...";
+            color: var(--text-muted);
+            font-style: italic;
+        }
+        .file-result-body .segment {
+            margin-bottom: 6px;
+            padding: 4px 0;
+            border-bottom: 1px dashed var(--divider);
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Audio player polish */
+        .audio-player-wrap {
+            margin-top: 10px;
+            background: var(--surface-2);
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+        }
+        .audio-player-wrap audio {
+            width: 100%;
+            height: 32px;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        /* ========== Section Labels ========== */
+        .section-label {
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 5px;
+        }
+
+        /* ========== AI Summary Trigger (plain text + green dot) ========== */
+        .summary-trigger {
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            user-select: none;
+            transition: color var(--transition);
+            padding: 2px 4px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+        .summary-trigger:hover { color: var(--text); }
+        .summary-trigger.disabled {
+            opacity: 0.38;
+            pointer-events: none;
+            cursor: default;
+        }
+        .summary-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--summary-dot);
+            flex-shrink: 0;
+        }
+
+        /* ========== Summary Block (in transcription body) ========== */
+        .summary-block {
+            margin-top: 16px;
+            border: 1px solid var(--summary-border);
+            border-radius: var(--radius-sm);
+            background: var(--summary-bg);
+            overflow: hidden;
+        }
+        .summary-block-header {
+            padding: 7px 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--summary-header-text);
+            background: var(--summary-header-bg);
+            border-bottom: 1px solid var(--summary-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .summary-copy {
+            cursor: pointer;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: var(--summary-accent);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            user-select: none;
+            opacity: 0.75;
+            transition: opacity var(--transition);
+            flex-shrink: 0;
+        }
+        .summary-copy:hover { opacity: 1; }
+        .summary-copy.copied { color: var(--success-text); }
+        .summary-block-body {
+            padding: 12px 14px;
+            font-size: 0.95rem;
+            line-height: 1.85;
+            color: var(--text);
+            word-break: break-word;
+        }
+        /* Markdown 渲染格式 */
+        .summary-block-body p { margin: 0 0 8px; }
+        .summary-block-body p:last-child { margin-bottom: 0; }
+        .summary-block-body ul,
+        .summary-block-body ol {
+            margin: 6px 0 10px;
+            padding-left: 22px;
+        }
+        .summary-block-body li { margin-bottom: 4px; }
+        .summary-block-body strong { font-weight: 700; color: var(--summary-strong); }
+        .summary-block-body h1,
+        .summary-block-body h2,
+        .summary-block-body h3 {
+            font-size: 0.98rem;
+            font-weight: 700;
+            margin: 10px 0 6px;
+            color: var(--summary-heading);
+        }
+        .summary-block-body code {
+            background: var(--summary-code-bg);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-family: "SF Mono", "Consolas", monospace;
+            font-size: 0.85em;
+        }
+        .summary-block-loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-style: italic;
+            padding: 12px 14px;
+            font-size: 0.88rem;
+        }
+
+        /* ========== 意图内联标签（实时转写中显示） ========== */
+        .intent-inline-label {
+            display: inline-block;
+            margin: 4px 0;
+            padding: 3px 8px;
+            background: var(--intent-chip-bg);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--intent-chip-text);
+            line-height: 1.3;
+        }
+        .intent-inline-label strong {
+            font-weight: 600;
+        }
+
+        /* ========== 设置面板（意图+热词） ========== */
+        .settings-panel {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            width: 460px;
+            max-width: calc(100vw - 40px);
+            max-height: calc(100vh - 120px);
+            background: var(--surface-raised);
+            border-radius: var(--radius);
+            box-shadow: 0 20px 60px var(--overlay-shadow);
+            border: 2px solid var(--panel-border);
+            z-index: 500;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .settings-panel.open {
+            display: flex;
+        }
+        .settings-header {
+            padding: 14px 18px;
+            background: var(--header-bg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .settings-header-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .settings-close {
+            background: rgba(255,255,255,0.18);
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: #fff;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            transition: all var(--transition);
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .settings-close:hover {
+            background: rgba(255,255,255,0.32);
+        }
+        .settings-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 12px 18px 0;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-2);
+            flex-shrink: 0;
+        }
+        .settings-tab {
+            padding: 9px 16px;
+            border: none;
+            background: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all var(--transition);
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .settings-tab:hover { color: var(--text); }
+        .settings-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .settings-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .settings-panel-content {
+            padding: 18px;
+            display: none;
+        }
+        .settings-panel-content.active {
+            display: block;
+        }
+        .settings-section {
+            margin-bottom: 20px;
+        }
+        .settings-section:last-child {
+            margin-bottom: 0;
+        }
+        .settings-section-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 意图历史面板样式 */
+        .intent-history-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: var(--surface-raised);
+            border: 1px solid var(--intent-chip-border);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: var(--intent-chip-text);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .intent-history-item:hover {
+            background: var(--intent-chip-hover);
+            border-color: var(--intent-chip-hover-border);
+            transform: scale(1.05);
+        }
+        .intent-history-item-id {
+            font-weight: 700;
+            font-size: 0.7rem;
+        }
+        .intent-history-item-name {
+            font-weight: 600;
+        }
+
+        /* ========== 意图触发日志 ========== */
+        .intent-log-card {
+            margin-top: 14px;
+        }
+        .intent-log-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .intent-log-clear {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all var(--transition);
+        }
+        .intent-log-clear:hover {
+            color: var(--danger);
+            background: var(--danger-bg);
+        }
+        .intent-log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--surface-2);
+        }
+        .intent-log-empty {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-style: italic;
+        }
+        .intent-log-item {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            background: var(--surface-raised);
+            transition: background var(--transition);
+        }
+        .intent-log-item:hover {
+            background: var(--primary-light);
+        }
+        .intent-log-item:last-child {
+            border-bottom: none;
+        }
+        .intent-log-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: space-between;
+        }
+        .intent-log-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+        .intent-log-id {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #fff;
+            background: var(--primary);
+            padding: 2px 8px;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        .intent-log-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text);
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .intent-log-time {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        .intent-log-text {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            padding-left: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .intent-log-extra {
+            font-size: 0.75rem;
+            color: var(--success-text);
+            background: var(--success-bg);
+            padding: 3px 8px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-top: 2px;
+        }
+
+        /* ========== Intent Reference Modal ========== */
+        .intent-ref-modal {
+            position: fixed;
+            inset: 0;
+            background: var(--overlay);
+            backdrop-filter: blur(4px);
+            z-index: 1001;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            animation: fadeIn 0.2s ease;
+        }
+        .intent-ref-modal.open { display: flex; }
+        .intent-ref-modal-content {
+            background: var(--surface-raised);
+            border-radius: var(--radius);
+            box-shadow: 0 20px 60px var(--overlay-shadow);
+            width: 100%;
+            max-width: 900px;
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .intent-ref-modal-header {
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--header-bg);
+            flex-shrink: 0;
+        }
+        .intent-ref-modal-title {
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .intent-ref-close {
+            background: rgba(255,255,255,0.18);
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            transition: all var(--transition);
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .intent-ref-close:hover { background: rgba(255,255,255,0.32); }
+
+        .intent-ref-modal-body {
+            flex: 1;
+            padding: 22px;
+            overflow-y: auto;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            color: var(--text);
+        }
+
+        .intent-category {
+            margin-bottom: 24px;
+        }
+        .intent-category-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid var(--primary-light);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .intent-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 8px;
+        }
+        .intent-item {
+            padding: 8px 12px;
+            background: var(--input-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            transition: all var(--transition);
+        }
+        .intent-item:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            transform: translateX(2px);
+        }
+        .intent-item-id {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #fff;
+            background: var(--primary);
+            padding: 2px 8px;
+            border-radius: 6px;
+            flex-shrink: 0;
+            min-width: 32px;
+            text-align: center;
+        }
+        .intent-item-name {
+            flex: 1;
+            font-size: 0.85rem;
+            color: var(--text);
+            line-height: 1.4;
+        }
+        .intent-search-box {
+            margin-bottom: 16px;
+            position: sticky;
+            top: 0;
+            background: var(--surface-raised);
+            padding-bottom: 12px;
+            z-index: 10;
+        }
+        .intent-search-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 0.88rem;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--input-bg);
+            outline: none;
+            transition: all var(--transition);
+        }
+        .intent-search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26,115,232,0.1);
+            background: var(--surface-raised);
+        }
+
+        @media (max-width: 640px) {
+            .intent-ref-modal { padding: 0; }
+            .intent-ref-modal-content { max-height: 100vh; border-radius: 0; }
+            .intent-list {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ========== Summary Modal ========== */
+        .summary-modal {
+            position: fixed;
+            inset: 0;
+            background: var(--overlay);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.2s ease;
+        }
+        .summary-modal-content {
+            background: var(--surface-raised);
+            border-radius: var(--radius);
+            box-shadow: 0 20px 60px var(--overlay-shadow);
+            width: 100%;
+            max-width: 680px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .summary-modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--summary-bg);
+            flex-shrink: 0;
+        }
+        .summary-modal-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--summary-header-text);
+        }
+        .summary-close {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all var(--transition);
+            line-height: 1;
+        }
+        .summary-close:hover {
+            background: var(--surface-3);
+            color: var(--text);
+        }
+        .summary-modal-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            font-size: 0.95rem;
+            line-height: 1.9;
+            color: var(--text);
+        }
+        .summary-loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        .summary-spinner {
+            width: 18px;
+            height: 18px;
+            border: 3px solid var(--summary-border);
+            border-top-color: var(--summary-accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .summary-result {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .summary-error {
+            color: var(--danger);
+            background: var(--danger-bg);
+            padding: 12px 14px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--danger-border);
+        }
+
+        /* ========== API Doc Modal ========== */
+        .doc-modal {
+            position: fixed;
+            inset: 0;
+            background: var(--overlay);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            animation: fadeIn 0.2s ease;
+        }
+        .doc-modal.open { display: flex; }
+        .doc-modal-content {
+            background: var(--surface-raised);
+            border-radius: var(--radius);
+            box-shadow: 0 20px 60px var(--overlay-shadow);
+            width: 100%;
+            max-width: 960px;
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .doc-modal-header {
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--header-bg);
+            flex-shrink: 0;
+        }
+        .doc-modal-title {
+            font-size: 1.02rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .doc-close {
+            background: rgba(255,255,255,0.18);
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            transition: all var(--transition);
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .doc-close:hover { background: rgba(255,255,255,0.32); }
+
+        /* Tabs */
+        .doc-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 12px 22px 0;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-2);
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+        .doc-tab {
+            padding: 9px 16px;
+            border: none;
+            background: none;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all var(--transition);
+            white-space: nowrap;
+            font-family: inherit;
+        }
+        .doc-tab:hover { color: var(--text); }
+        .doc-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .doc-modal-body {
+            flex: 1;
+            padding: 22px;
+            overflow-y: auto;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--text);
+        }
+        .doc-panel { display: none; }
+        .doc-panel.active { display: block; animation: fadeIn 0.2s ease; }
+
+        .doc-modal-body h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 20px 0 10px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .doc-modal-body h3:first-child { margin-top: 0; }
+        .doc-modal-body h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin: 16px 0 8px;
+            color: var(--primary-dark);
+        }
+        .doc-modal-body p { margin: 8px 0; color: var(--text-secondary); }
+        .doc-modal-body ul { margin: 8px 0 8px 20px; color: var(--text-secondary); }
+        .doc-modal-body li { margin: 4px 0; }
+        .doc-modal-body code {
+            background: var(--code-inline-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+            font-size: 0.82rem;
+            color: var(--code-inline-text);
+        }
+
+        .doc-endpoint {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+            font-size: 0.88rem;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+        .doc-endpoint .method {
+            background: var(--accent);
+            color: #06232b;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+        }
+
+        /* Tables */
+        .doc-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0 16px;
+            font-size: 0.83rem;
+        }
+        .doc-table th, .doc-table td {
+            text-align: left;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            vertical-align: top;
+        }
+        .doc-table th {
+            background: var(--surface-3);
+            font-weight: 700;
+            color: var(--text);
+            white-space: nowrap;
+        }
+        .doc-table td code {
+            background: var(--doc-td-code-bg);
+            color: var(--doc-td-code-text);
+        }
+        .doc-table .req { color: var(--danger); font-weight: 700; }
+        .doc-table .opt { color: var(--text-secondary); }
+
+        /* Code blocks */
+        .doc-code-wrap {
+            position: relative;
+            margin: 10px 0 18px;
+        }
+        .doc-code-wrap pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 16px 18px;
+            border-radius: var(--radius-sm);
+            overflow-x: auto;
+            font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+            font-size: 0.8rem;
+            line-height: 1.6;
+            white-space: pre;
+            tab-size: 2;
+        }
+        .doc-code-wrap pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        .doc-copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px 12px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.12);
+            color: #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: inherit;
+        }
+        .doc-copy-btn:hover { background: rgba(255,255,255,0.25); }
+
+        .doc-note {
+            background: var(--note-bg);
+            border-left: 3px solid var(--primary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin: 12px 0;
+            font-size: 0.84rem;
+            color: var(--note-text);
+        }
+        .doc-note.warn {
+            background: var(--warn-bg);
+            border-left-color: var(--warning);
+            color: var(--warn-text);
+        }
+
+        @media (max-width: 640px) {
+            .doc-modal { padding: 0; }
+            .doc-modal-content { max-height: 100vh; border-radius: 0; }
+            .header-doc-btn { min-width: 96px; height: 34px; padding: 0 12px; font-size: 0.78rem; }
+        }
+
+        /* ========== Responsive ========== */
+        @media (max-width: 960px) {
+            .container {
+                flex-direction: column;
+                padding: 14px 12px 24px;
+            }
+
+            .right-panel {
+                flex: none;
+                min-width: 0;
+                max-width: none;
+            }
+
+            .left-panel {
+                flex: none;
+            }
+
+            .transcription-card {
+                min-height: 350px;
+                max-height: calc(100vh - 90px);
+            }
+
+            .transcription-body {
+                min-height: 0;
+            }
+
+            .file-result-body {
+                max-height: 280px;
+                min-height: 100px;
+            }
+
+            .header h1 {
+                font-size: 1.15rem;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .transcription-card {
+                min-height: 280px;
+            }
+
+            .transcription-body {
+                min-height: 0;
+                font-size: 0.9rem;
+            }
+
+            .file-result-body {
+                max-height: 240px;
+                min-height: 80px;
+                font-size: 0.88rem;
+            }
+
+            .radio-group {
+                gap: 4px;
+            }
+
+            .radio-pill span {
+                padding: 5px 10px;
+                font-size: 0.78rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 主题需在首屏绘制前应用，避免深色模式下闪一下白底 -->
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('asr_theme');
+                var dark = saved
+                    ? saved === 'dark'
+                    : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+            } catch (e) { /* localStorage 不可用时保持浅色 */ }
+        })();
+    </script>
+
+    <!-- ===== Header ===== -->
+    <header class="header">
+        <div class="header-inner">
+            <div class="header-icon">🎙️</div>
+            <div>
+                <h1>JYD—ASR语音转写实时纠错系统</h1>
+                <div class="header-subtitle">实时语音识别 · 离线文件转写 · 智能纠错</div>
+            </div>
+            <div class="header-actions">
+                <button class="header-doc-btn" onclick="openApiDoc()" title="查看接口文档与调用示例">
+                    📖 接口文档
+                </button>
+                <button class="header-doc-btn" onclick="toggleSettingsPanel()" title="配置意图识别和热词">
+                    ⚙️ 设置
+                </button>
+                <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()"
+                        title="切换深色/浅色模式" aria-label="切换深色/浅色模式" aria-pressed="false">
+                    <span class="icon-moon" aria-hidden="true">🌙</span>
+                    <span class="icon-sun" aria-hidden="true">☀️</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== Main Content: Two-Column Layout ===== -->
+    <div class="container">
+
+        <!-- ========== LEFT: Real-time Transcription ========== -->
+        <div class="left-panel">
+
+            <!-- 文件上传区（仅文件模式显示） -->
+            <div id="file_section" class="card" style="display:none;">
+                <div class="card-title"><span class="dot"></span>音频文件</div>
+
+                <!-- 上传拖拽区 -->
+                <div id="upload_zone" class="file-upload-zone">
+                    <input type="file" id="upfile" accept="audio/*" />
+                    <div class="upload-icon">🎵</div>
+                    <div class="upload-title">点击或拖拽上传音频文件</div>
+                    <div class="upload-hint">支持 WAV / MP3 / FLAC / AAC / OGG 格式</div>
+                </div>
+
+                <!-- 文件信息卡片（选择后显示） -->
+                <div id="file_card" class="file-card" style="display:none;">
+                    <div class="file-card-icon">✅</div>
+                    <div class="file-card-info">
+                        <div class="file-card-name" id="file_card_name"></div>
+                        <div class="file-card-meta" id="file_card_meta"></div>
+                    </div>
+                    <div class="file-card-status">已就绪</div>
+                </div>
+
+                <!-- 试听播放器 -->
+                <div class="audio-player-wrap" id="audio_player_wrap" style="display:none;">
+                    <audio id="audio_file_preview" type="audio/wav" controls></audio>
+                </div>
+
+                <!-- 文件转写结果区（文件模式下独立展示，不与实时转写共用） -->
+                <div id="file_result_area" class="file-result-area" style="display:none;">
+                    <div class="file-result-header">
+                        <span class="file-result-title">📝 文件转写结果</span>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="file-result-badge" id="fileRecognitionBadge">等待转写</span>
+                            <span class="summary-trigger btn-summarize" onclick="summarizeText()" title="AI智能总结转写内容"><span class="summary-dot"></span>总结</span>
+                        </div>
+                    </div>
+                    <div class="file-result-body" id="fileTranscriptionBody"></div>
+                </div>
+            </div>
+
+            <!-- 实时转写文字区（仅麦克风模式使用） -->
+            <div class="transcription-card" id="mic_transcription_card">
+                <div class="transcription-header">
+                    <div class="transcription-title">
+                        <span class="dot"></span>实时转写文字
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+                        <span class="transcription-badge" id="recognitionBadge">待连接</span>
+                        <span class="summary-trigger btn-summarize" onclick="summarizeText()" title="AI智能总结转写内容"><span class="summary-dot"></span>总结</span>
+                    </div>
+                </div>
+                <div class="transcription-body" id="transcriptionBody"></div>
+
+                <!-- 意图识别历史显示区 -->
+                <div id="intentHistoryPanel" style="display:none; padding:12px 20px; background:var(--surface-2); border-top:1px solid var(--border);">
+                    <div style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+                        <span>🎯 识别到的意图</span>
+                        <span style="font-size:0.7rem;font-weight:400;color:var(--text-muted);">(点击查看详情)</span>
+                    </div>
+                    <div id="intentHistoryList" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                </div>
+
+                <div class="audio-section" style="padding:0 16px 12px;">
+                    <audio id="audio_record" type="audio/wav" controls></audio>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== RIGHT: Configuration Panels ========== -->
+        <div class="right-panel">
+
+            <!-- Intent Log Card (移到最上方) -->
+            <div class="card intent-log-card" id="intentLogCard" style="display:none;">
+                <div class="intent-log-header">
+                    <div class="card-title" style="margin-bottom:0;"><span class="dot"></span>意图触发日志</div>
+                    <span class="intent-log-clear" onclick="clearIntentLog()">🗑️ 清空</span>
+                </div>
+                <div class="intent-log-container" id="intentLogContainer">
+                    <div class="intent-log-empty">暂无意图触发记录</div>
+                </div>
+            </div>
+
+            <!-- Connection & Control Card -->
+            <div class="card">
+                <div class="card-title"><span class="dot"></span>连接与控制</div>
+
+                <!-- 地址 + 连接按钮 同行 -->
+                <div style="display:flex; gap:8px; align-items:stretch;">
+                    <input id="wssip" type="text" class="server-addr-compact" value="wss://188.18.54.94:10096/ws" style="flex:1;" title="WebSocket 服务器地址" />
+                    <button id="btnConnect" class="btn-connect">连接</button>
+                </div>
+
+                <!-- 小字状态提示 -->
+                <div id="info_div" class="status-text"></div>
+
+                <!-- 操作按钮 50/50 -->
+                <div class="btn-group-5050">
+                    <button id="btnStart" class="btn btn-success">▶ 开始</button>
+                    <button id="btnStop" class="btn btn-danger">⏹ 停止</button>
+                </div>
+            </div>
+
+            <!-- Recognition Mode Card -->
+            <div class="card">
+                <div class="card-title"><span class="dot"></span>识别模式</div>
+                <div class="section-label">录音模式</div>
+                <div class="radio-group" style="margin-bottom:12px;">
+                    <label class="radio-pill">
+                        <input name="recoder_mode" onclick="on_recoder_mode_change()" type="radio" value="mic" checked />
+                        <span>🎤 麦克风</span>
+                    </label>
+                    <label class="radio-pill">
+                        <input name="recoder_mode" onclick="on_recoder_mode_change()" type="radio" value="file" />
+                        <span>📁 文件上传</span>
+                    </label>
+                </div>
+
+                <div id="mic_mode_div">
+                    <div class="section-label">ASR模型模式</div>
+                    <div class="radio-group">
+                        <label class="radio-pill">
+                            <input name="asr_mode" type="radio" value="2pass" checked />
+                            <span>2pass</span>
+                        </label>
+                        <label class="radio-pill">
+                            <input name="asr_mode" type="radio" value="online" />
+                            <span>online</span>
+                        </label>
+                        <label class="radio-pill">
+                            <input name="asr_mode" type="radio" value="offline" />
+                            <span>offline</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Card -->
+            <div class="card">
+                <div class="card-title"><span class="dot"></span>识别设置</div>
+
+                <div style="margin-bottom:12px;">
+                    <div class="section-label">逆文本标准化 (ITN)</div>
+                    <div class="radio-group">
+                        <label class="radio-pill">
+                            <input name="use_itn" type="radio" value="false" checked />
+                            <span>否</span>
+                        </label>
+                        <label class="radio-pill">
+                            <input name="use_itn" type="radio" value="true" />
+                            <span>是</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="section-label">纠错特效</div>
+                    <div class="radio-group">
+                        <label class="radio-pill">
+                            <input name="correction_effect" type="radio" value="on" checked />
+                            <span>✨ 开启</span>
+                        </label>
+                        <label class="radio-pill">
+                            <input name="correction_effect" type="radio" value="off" />
+                            <span>🔘 关闭</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- /right-panel -->
+
+    </div>
+
+    <!-- ===== 设置面板（统一的意图+热词配置） ===== -->
+    <div id="settings_panel" class="settings-panel">
+        <div class="settings-header">
+            <div class="settings-header-title">⚙️ 系统设置</div>
+            <button class="settings-close" onclick="closeSettingsPanel()" title="关闭">✕</button>
+        </div>
+
+        <!-- Tab 标签栏 -->
+        <div class="settings-tabs">
+            <button class="settings-tab active" data-tab="hotword" onclick="switchSettingsTab('hotword')">🔥 热词设置</button>
+            <button class="settings-tab" data-tab="intent" onclick="switchSettingsTab('intent')">🎯 意图识别</button>
+        </div>
+
+        <div class="settings-content">
+            <!-- Tab 1: 热词配置 -->
+            <div class="settings-panel-content active" data-panel="hotword">
+                <div class="settings-section">
+                    <div style="margin-bottom:8px;">
+                        <div class="section-label">热词模板</div>
+                        <div class="hotword-template-row">
+                            <div id="hwDropdown" class="hw-dropdown">
+                                <button type="button" class="hw-dropdown-toggle" id="hwDropdownToggle" onclick="toggleHotwordDropdown(event)" title="选择热词模板">选择模板</button>
+                                <div class="hw-dropdown-menu" id="hwDropdownMenu"></div>
+                            </div>
+                            <button type="button" class="btn-hw btn-hw-save" onclick="saveHotwords()" title="保存当前热词">保存</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="section-label">热词内容（一行一个，空格隔开权重）</div>
+                        <textarea rows="12" id="varHot" class="input-area" placeholder="例如：竞业达 60&#10;hello world 40">竞业达 60&#13;hello world 40</textarea>
+                        <div class="hotword-actions">
+                            <span class="hotword-saved-hint" id="hotwordSavedHint"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: 意图识别配置 -->
+            <div class="settings-panel-content" data-panel="intent">
+                <div class="settings-section">
+                    <div style="margin-bottom:12px;">
+                        <div class="section-label">意图识别服务</div>
+                        <div class="radio-group">
+                            <label class="radio-pill">
+                                <input name="use_intent" type="radio" value="true" checked onchange="onIntentServiceChange()" />
+                                <span>✨ 启用</span>
+                            </label>
+                            <label class="radio-pill">
+                                <input name="use_intent" type="radio" value="false" onchange="onIntentServiceChange()" />
+                                <span>关闭</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:12px;">
+                        <div class="section-label">服务地址</div>
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <input id="intentServiceUrl" type="text" class="server-addr-compact"
+                                value="http://188.18.18.169:8024/intent"
+                                placeholder="意图识别服务地址"
+                                style="margin-top:0;flex:1;" />
+                            <button type="button" class="btn-hw" onclick="testIntentServiceManually()"
+                                    id="btnTestIntent" style="padding:6px 12px;white-space:nowrap;">
+                                🔍 测试
+                            </button>
+                        </div>
+                        <div id="intentServiceStatus" class="status-text" style="margin-top:4px;"></div>
+                    </div>
+
+                    <div style="margin-bottom:12px;">
+                        <div class="section-label">显示意图日志</div>
+                        <div class="radio-group">
+                            <label class="radio-pill">
+                                <input name="show_intent_log" type="radio" value="true" checked onchange="onShowIntentLogChange()" />
+                                <span>✨ 显示</span>
+                            </label>
+                            <label class="radio-pill">
+                                <input name="show_intent_log" type="radio" value="false" onchange="onShowIntentLogChange()" />
+                                <span>关闭</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:12px;">
+                        <div class="section-label">2PASS意图触发策略</div>
+                        <div class="radio-group">
+                            <label class="radio-pill">
+                                <input name="intent_trigger_mode" type="radio" value="offline_only" checked />
+                                <span>仅纠错后</span>
+                            </label>
+                            <label class="radio-pill">
+                                <input name="intent_trigger_mode" type="radio" value="both" />
+                                <span>实时+纠错</span>
+                            </label>
+                        </div>
+                        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;line-height:1.4;">
+                            仅纠错后：只在纠错完成后触发（推荐）<br>
+                            实时+纠错：在线和纠错后都触发（可能重复）
+                        </div>
+                    </div>
+
+                    <div>
+                        <button type="button" class="btn-hw" onclick="openIntentReference()"
+                                style="width:100%; border-color: var(--accent); color: var(--accent);">
+                            📖 查看意图对照表
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ===== Intent Reference Modal ===== -->
+    <div id="intent_ref_modal" class="intent-ref-modal" onclick="if(event.target===this)closeIntentReference()">
+        <div class="intent-ref-modal-content">
+            <div class="intent-ref-modal-header">
+                <div class="intent-ref-modal-title">🎯 意图识别对照表</div>
+                <button class="intent-ref-close" onclick="closeIntentReference()" title="关闭">✕</button>
+            </div>
+
+            <div class="intent-ref-modal-body">
+                <div class="intent-search-box">
+                    <input type="text" class="intent-search-input" id="intentSearchInput"
+                           placeholder="搜索意图ID或功能名称..."
+                           oninput="filterIntents(this.value)">
+                </div>
+
+                <div id="intentListContainer">
+                    <!-- 录制相关 -->
+                    <div class="intent-category" data-category="recording">
+                        <div class="intent-category-title">🔴 录制相关</div>
+                        <div class="intent-list">
+                            <div class="intent-item" data-id="1" data-name="开始录制">
+                                <span class="intent-item-id">1</span>
+                                <span class="intent-item-name">开始录制</span>
+                            </div>
+                            <div class="intent-item" data-id="2" data-name="暂停录制">
+                                <span class="intent-item-id">2</span>
+                                <span class="intent-item-name">暂停录制</span>
+                            </div>
+                            <div class="intent-item" data-id="3" data-name="结束录制">
+                                <span class="intent-item-id">3</span>
+                                <span class="intent-item-name">结束录制</span>
+                            </div>
+                            <div class="intent-item" data-id="4" data-name="继续录制">
+                                <span class="intent-item-id">4</span>
+                                <span class="intent-item-name">继续录制</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 回放控制 -->
+                    <div class="intent-category" data-category="playback">
+                        <div class="intent-category-title">▶️ 回放控制</div>
+                        <div class="intent-list">
+                            <div class="intent-item" data-id="5" data-name="打开回放模块">
+                                <span class="intent-item-id">5</span>
+                                <span class="intent-item-name">打开回放模块</span>
+                            </div>
+                            <div class="intent-item" data-id="6" data-name="暂停播放">
+                                <span class="intent-item-id">6</span>
+                                <span class="intent-item-name">暂停播放</span>
+                            </div>
+                            <div class="intent-item" data-id="7" data-name="继续播放">
+                                <span class="intent-item-id">7</span>
+                                <span class="intent-item-name">继续播放</span>
+                            </div>
+                            <div class="intent-item" data-id="8" data-name="关闭回放">
+                                <span class="intent-item-id">8</span>
+                                <span class="intent-item-name">关闭回放</span>
+                            </div>
+                            <div class="intent-item" data-id="9" data-name="快进">
+                                <span class="intent-item-id">9</span>
+                                <span class="intent-item-name">快进（可带时间）</span>
+                            </div>
+                            <div class="intent-item" data-id="10" data-name="回退">
+                                <span class="intent-item-id">10</span>
+                                <span class="intent-item-name">回退（可带时间）</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 白板批注 -->
+                    <div class="intent-category" data-category="whiteboard">
+                        <div class="intent-category-title">✏️ 白板批注</div>
+                        <div class="intent-list">
+                            <div class="intent-item" data-id="11" data-name="打开白板">
+                                <span class="intent-item-id">11</span>
+                                <span class="intent-item-name">打开白板</span>
+                            </div>
+                            <div class="intent-item" data-id="12" data-name="打开批注">
+                                <span class="intent-item-id">12</span>
+                                <span class="intent-item-name">打开批注</span>
+                            </div>
+                            <div class="intent-item" data-id="13" data-name="关闭批注">
+                                <span class="intent-item-id">13</span>
+                                <span class="intent-item-name">关闭批注</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 其他功能 -->
+                    <div class="intent-category" data-category="other">
+                        <div class="intent-category-title">🔧 其他功能</div>
+                        <div class="intent-list">
+                            <div class="intent-item" data-id="14" data-name="远程互动">
+                                <span class="intent-item-id">14</span>
+                                <span class="intent-item-name">远程互动</span>
+                            </div>
+                            <div class="intent-item" data-id="15" data-name="打开国戏课程">
+                                <span class="intent-item-id">15</span>
+                                <span class="intent-item-name">打开国戏课程</span>
+                            </div>
+                            <div class="intent-item" data-id="16" data-name="打开投屏">
+                                <span class="intent-item-id">16</span>
+                                <span class="intent-item-name">打开投屏</span>
+                            </div>
+                            <div class="intent-item" data-id="17" data-name="关闭投屏">
+                                <span class="intent-item-id">17</span>
+                                <span class="intent-item-name">关闭投屏</span>
+                            </div>
+                            <div class="intent-item" data-id="18" data-name="退出AI">
+                                <span class="intent-item-id">18</span>
+                                <span class="intent-item-name">退出AI</span>
+                            </div>
+                            <div class="intent-item" data-id="19" data-name="打开U盘">
+                                <span class="intent-item-id">19</span>
+                                <span class="intent-item-name">打开U盘</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 视频选择 -->
+                    <div class="intent-category" data-category="video">
+                        <div class="intent-category-title">📹 视频选择</div>
+                        <div class="intent-list">
+                            <div class="intent-item" data-id="20" data-name="根据位置打开视频">
+                                <span class="intent-item-id">20</span>
+                                <span class="intent-item-name">根据位置打开视频</span>
+                            </div>
+                            <div class="intent-item" data-id="21" data-name="根据名字时间打开视频">
+                                <span class="intent-item-id">21</span>
+                                <span class="intent-item-name">根据名字时间打开视频</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 状态查询 -->
+                    <div class="intent-category" data-category="query">
+                        <div class="intent-category-title">❓ 状态查询</div>
+                        <div class="intent-list">
+                            <div class="intent-item" data-id="22" data-name="继续（上下文相关）">
+                                <span class="intent-item-id">22</span>
+                                <span class="intent-item-name">继续（上下文相关）</span>
+                            </div>
+                            <div class="intent-item" data-id="23" data-name="查询录制状态">
+                                <span class="intent-item-id">23</span>
+                                <span class="intent-item-name">查询录制状态</span>
+                            </div>
+                            <div class="intent-item" data-id="24" data-name="查询录制时长">
+                                <span class="intent-item-id">24</span>
+                                <span class="intent-item-name">查询录制时长</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 回放管理 -->
+                    <div class="intent-category" data-category="playback-mgmt">
+                        <div class="intent-category-title">📂 回放管理</div>
+                        <div class="intent-list">
+                            <div class="intent-item" data-id="25" data-name="切换回放Tab">
+                                <span class="intent-item-id">25</span>
+                                <span class="intent-item-name">切换回放Tab</span>
+                            </div>
+                            <div class="intent-item" data-id="26" data-name="删除回放记录">
+                                <span class="intent-item-id">26</span>
+                                <span class="intent-item-name">删除回放记录</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 字幕与播放 -->
+                    <div class="intent-category" data-category="subtitle">
+                        <div class="intent-category-title">💬 字幕与播放</div>
+                        <div class="intent-list">
+                            <div class="intent-item" data-id="27" data-name="开启AI字幕">
+                                <span class="intent-item-id">27</span>
+                                <span class="intent-item-name">开启AI字幕</span>
+                            </div>
+                            <div class="intent-item" data-id="28" data-name="关闭AI字幕">
+                                <span class="intent-item-id">28</span>
+                                <span class="intent-item-name">关闭AI字幕</span>
+                            </div>
+                            <div class="intent-item" data-id="29" data-name="跳转至指定时间点">
+                                <span class="intent-item-id">29</span>
+                                <span class="intent-item-name">跳转至指定时间点（分秒）</span>
+                            </div>
+                            <div class="intent-item" data-id="30" data-name="调节播放速度">
+                                <span class="intent-item-id">30</span>
+                                <span class="intent-item-name">调节播放速度（倍速）</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 音量控制 -->
+                    <div class="intent-category" data-category="volume">
+                        <div class="intent-category-title">🔊 音量控制</div>
+                        <div class="intent-list">
+                            <div class="intent-item" data-id="31" data-name="调高音量">
+                                <span class="intent-item-id">31</span>
+                                <span class="intent-item-name">调高音量</span>
+                            </div>
+                            <div class="intent-item" data-id="32" data-name="调低音量">
+                                <span class="intent-item-id">32</span>
+                                <span class="intent-item-name">调低音量</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 课程相关 -->
+                    <div class="intent-category" data-category="course">
+                        <div class="intent-category-title">📚 课程相关</div>
+                        <div class="intent-list">
+                            <div class="intent-item" data-id="33" data-name="切换我的课程/全部课程">
+                                <span class="intent-item-id">33</span>
+                                <span class="intent-item-name">切换我的课程/全部课程</span>
+                            </div>
+                            <div class="intent-item" data-id="34" data-name="按剧种筛选">
+                                <span class="intent-item-id">34</span>
+                                <span class="intent-item-name">按剧种筛选</span>
+                            </div>
+                            <div class="intent-item" data-id="35" data-name="搜索课程">
+                                <span class="intent-item-id">35</span>
+                                <span class="intent-item-name">搜索课程</span>
+                            </div>
+                            <div class="intent-item" data-id="36" data-name="开始学习">
+                                <span class="intent-item-id">36</span>
+                                <span class="intent-item-name">开始学习</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 播放模式 -->
+                    <div class="intent-category" data-category="mode">
+                        <div class="intent-category-title">🎵 播放模式</div>
+                        <div class="intent-list">
+                            <div class="intent-item" data-id="37" data-name="切换正常模式">
+                                <span class="intent-item-id">37</span>
+                                <span class="intent-item-name">切换正常模式（关闭伴奏）</span>
+                            </div>
+                            <div class="intent-item" data-id="38" data-name="切换伴奏模式">
+                                <span class="intent-item-id">38</span>
+                                <span class="intent-item-name">切换伴奏模式</span>
+                            </div>
+                            <div class="intent-item" data-id="39" data-name="开启镜像动作">
+                                <span class="intent-item-id">39</span>
+                                <span class="intent-item-name">开启镜像动作</span>
+                            </div>
+                            <div class="intent-item" data-id="40" data-name="关闭镜像动作">
+                                <span class="intent-item-id">40</span>
+                                <span class="intent-item-name">关闭镜像动作</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 高级功能 -->
+                    <div class="intent-category" data-category="advanced">
+                        <div class="intent-category-title">⚡ 高级功能</div>
+                        <div class="intent-list">
+                            <div class="intent-item" data-id="41" data-name="台词跳转">
+                                <span class="intent-item-id">41</span>
+                                <span class="intent-item-name">台词跳转（根据台词文本）</span>
+                            </div>
+                            <div class="intent-item" data-id="42" data-name="语音助手唤醒">
+                                <span class="intent-item-id">42</span>
+                                <span class="intent-item-name">语音助手唤醒（你好小达）</span>
+                            </div>
+                            <div class="intent-item" data-id="43" data-name="返回上一级">
+                                <span class="intent-item-id">43</span>
+                                <span class="intent-item-name">返回上一级</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 其他 -->
+                    <div class="intent-category" data-category="misc">
+                        <div class="intent-category-title">⚪ 其他</div>
+                        <div class="intent-list">
+                            <div class="intent-item" data-id="0" data-name="无效指令">
+                                <span class="intent-item-id">0</span>
+                                <span class="intent-item-name">无效指令/无法识别</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== API Doc Modal ===== -->
+    <div id="doc_modal" class="doc-modal" onclick="if(event.target===this)closeApiDoc()">
+        <div class="doc-modal-content">
+            <div class="doc-modal-header">
+                <div class="doc-modal-title">📖 ASR 接口文档 &amp; 调用示例</div>
+                <button class="doc-close" onclick="closeApiDoc()" title="关闭">✕</button>
+            </div>
+
+            <div class="doc-tabs">
+                <button class="doc-tab active" data-tab="overview" onclick="switchDocTab('overview')">概览</button>
+                <button class="doc-tab" data-tab="protocol" onclick="switchDocTab('protocol')">协议 &amp; 字段</button>
+                <button class="doc-tab" data-tab="js" onclick="switchDocTab('js')">前端 JS</button>
+                <button class="doc-tab" data-tab="python" onclick="switchDocTab('python')">Python 后端</button>
+                <button class="doc-tab" data-tab="android" onclick="switchDocTab('android')">Android</button>
+            </div>
+
+            <div class="doc-modal-body">
+
+                <!-- ===== 概览 ===== -->
+                <div class="doc-panel active" data-panel="overview">
+                    <h3>🔌 服务概述</h3>
+                    <p>本系统基于 FunASR 实时语音识别服务，通过 <strong>WebSocket</strong> 长连接进行流式音频传输与识别结果回传，支持三种模式：</p>
+                    <ul>
+                        <li><code>2pass</code> — 实时上屏 + 离线二次纠错（推荐，兼顾速度与准确率）</li>
+                        <li><code>online</code> — 纯流式实时识别，低延迟</li>
+                        <li><code>offline</code> — 整段/文件一次性高精度识别</li>
+                    </ul>
+
+                    <div class="doc-endpoint">
+                        <span class="method">WS</span>
+                        <span id="doc_ws_url">ws://188.18.18.106:10095</span>
+                    </div>
+                    <p>当前环境仅支持 <code>ws://</code> 明文连接，默认端口 <code>10095</code>。请统一使用 <code>ws://</code> 协议前缀调用。</p>
+
+                    <h3>🔄 交互流程</h3>
+                    <ul>
+                        <li><strong>1. 建立连接</strong>：客户端与服务端建立 WebSocket 连接。</li>
+                        <li><strong>2. 发送配置</strong>：连接成功后，首帧发送一个 <strong>JSON 文本帧</strong>，声明识别模式、采样率、热词等参数。</li>
+                        <li><strong>3. 发送音频</strong>：持续发送 <strong>二进制帧</strong>（16kHz / 16bit / 单声道 PCM 小端）。</li>
+                        <li><strong>4. 接收结果</strong>：服务端以 <strong>JSON 文本帧</strong> 实时回传识别结果。</li>
+                        <li><strong>5. 结束</strong>：发送 <code>is_speaking:false</code> 的 JSON 帧，触发最终识别并 flush 缓冲区。</li>
+                    </ul>
+
+                    <div class="doc-note">
+                        💡 音频要求：<strong>16000 Hz 采样率、16 bit 位深、单声道、PCM 裸流（小端）</strong>。麦克风采集的音频需重采样到 16k 后发送。WAV 文件需跳过 44 字节文件头只发 PCM 数据；MP3/FLAC/M4A 等压缩格式可整包发送，由服务端 ffmpeg 解码。
+                    </div>
+                    <div class="doc-note warn">
+                        ⚠️ 本服务当前仅提供 <code>ws://</code> 明文接入，暂不支持 <code>wss://</code>。所有客户端请使用 <code>ws://</code> 前缀连接。
+                    </div>
+                </div>
+
+                <!-- ===== 协议 & 字段 ===== -->
+                <div class="doc-panel" data-panel="protocol">
+                    <h3>📤 请求参数（首帧 JSON 配置）</h3>
+                    <p>连接建立后发送的第一个文本帧，JSON 格式：</p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr><th>字段</th><th>类型</th><th>必填</th><th>说明</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>mode</code></td><td>string</td><td class="req">必填</td><td>识别模式：<code>2pass</code> / <code>online</code> / <code>offline</code></td></tr>
+                            <tr><td><code>chunk_size</code></td><td>int[]</td><td class="req">必填</td><td>分块配置 <code>[5,10,5]</code>，含义为 [回看块, 当前块, 前看块]，对应 600ms 分片</td></tr>
+                            <tr><td><code>chunk_interval</code></td><td>int</td><td class="opt">可选</td><td>分块间隔，默认 <code>10</code></td></tr>
+                            <tr><td><code>wav_name</code></td><td>string</td><td class="opt">可选</td><td>音频标识名，默认 <code>"h5"</code>，用于结果回溯</td></tr>
+                            <tr><td><code>is_speaking</code></td><td>bool</td><td class="req">必填</td><td><code>true</code>=开始/持续说话；<code>false</code>=结束，触发最终识别</td></tr>
+                            <tr><td><code>itn</code></td><td>bool</td><td class="opt">可选</td><td>逆文本标准化（数字/日期转阿拉伯数字等），默认 <code>false</code></td></tr>
+                            <tr><td><code>hotwords</code></td><td>string</td><td class="opt">可选</td><td>热词，格式为多行 <code>"词 权重"</code>（每行一个，空格分隔），如 <code>"竞业达 60\nhello world 40\n语音识别 50"</code></td></tr>
+                            <tr><td><code>wav_format</code></td><td>string</td><td class="opt">可选</td><td>文件模式使用：WAV 填 <code>pcm</code>；其他压缩格式填 <code>others</code></td></tr>
+                            <tr><td><code>audio_fs</code></td><td>int</td><td class="opt">可选</td><td>文件模式音频采样率，如 <code>16000</code></td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>📥 响应参数（识别结果 JSON）</h3>
+                    <p>服务端以文本帧持续返回：</p>
+                    <table class="doc-table">
+                        <thead>
+                            <tr><th>字段</th><th>类型</th><th>说明</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td><code>text</code></td><td>string</td><td>识别文本片段</td></tr>
+                            <tr><td><code>mode</code></td><td>string</td><td>结果类型：<code>2pass-online</code>（实时）/ <code>2pass-offline</code>（纠错）/ <code>online</code> / <code>offline</code></td></tr>
+                            <tr><td><code>wav_name</code></td><td>string</td><td>对应请求的音频标识</td></tr>
+                            <tr><td><code>is_final</code></td><td>bool</td><td>是否为最后一段结果</td></tr>
+                            <tr><td><code>timestamp</code></td><td>string</td><td>时间戳（offline/2pass-offline 模式返回），格式 <code>[[start,end],...]</code> 毫秒</td></tr>
+                            <tr><td><code>stamp_sents</code></td><td>array</td><td>句级时间戳数组（如启用）</td></tr>
+                        </tbody>
+                    </table>
+
+                    <div class="doc-note warn">
+                        ⚠️ 处理 <code>2pass</code> 结果时：<code>2pass-online</code> 是实时上屏文本，应<strong>追加</strong>显示；<code>2pass-offline</code> 是纠错后的结果，应<strong>替换</strong>掉对应的 online 文本，避免重复。
+                    </div>
+
+                    <h4>结果 JSON 示例</h4>
+                    <div class="doc-code-wrap">
+                        <button class="doc-copy-btn" onclick="copyDocCode(this)">复制</button>
+                        <pre><code>{
+  "mode": "2pass-offline",
+  "wav_name": "h5",
+  "text": "竞业达科技有限公司",
+  "is_final": false,
+  "timestamp": "[[0,360],[360,600]]"
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- ===== 前端 JS ===== -->
+                <div class="doc-panel" data-panel="js">
+                    <h3>🌐 浏览器 / 前端 JavaScript</h3>
+                    <p>使用原生 <code>WebSocket</code> API，采集麦克风音频重采样为 16k PCM 后发送。</p>
+                    <div class="doc-code-wrap">
+                        <button class="doc-copy-btn" onclick="copyDocCode(this)">复制</button>
+                        <pre><code>// 1. 建立连接
+const ws = new WebSocket("ws://188.18.18.106:10095");
+ws.binaryType = "arraybuffer";
+
+// 2. 连接成功后发送配置帧
+ws.onopen = () =&gt; {
+  const config = {
+    chunk_size: [5, 10, 5],
+    wav_name: "h5",
+    is_speaking: true,
+    chunk_interval: 10,
+    itn: false,
+    mode: "2pass",
+    hotwords: "竞业达 60\nhello world 40\n语音识别 50"  // 多个热词用 \n 换行，格式：词 权重
+  };
+  ws.send(JSON.stringify(config));
+};
+
+// 3. 接收识别结果
+let onlineText = "", offlineText = "";
+ws.onmessage = (e) =&gt; {
+  const msg = JSON.parse(e.data);
+  if (msg.mode === "2pass-online") {
+    onlineText += msg.text;               // 实时结果追加
+  } else if (msg.mode === "2pass-offline") {
+    offlineText += msg.text;              // 纠错结果替换
+    onlineText = "";
+  }
+  console.log("识别结果:", offlineText + onlineText);
+};
+
+// 4. 采集麦克风 → 重采样 16k → 发送二进制 PCM
+async function startMic() {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const ctx = new AudioContext({ sampleRate: 16000 });
+  const source = ctx.createMediaStreamSource(stream);
+  const processor = ctx.createScriptProcessor(4096, 1, 1);
+  source.connect(processor);
+  processor.connect(ctx.destination);
+  processor.onaudioprocess = (ev) =&gt; {
+    const input = ev.inputBuffer.getChannelData(0);   // Float32 [-1,1]
+    const pcm = new Int16Array(input.length);
+    for (let i = 0; i &lt; input.length; i++) {
+      pcm[i] = Math.max(-1, Math.min(1, input[i])) * 0x7FFF;
+    }
+    if (ws.readyState === 1) ws.send(pcm.buffer);     // 发送 16bit PCM
+  };
+}
+
+// 5. 结束识别
+function stopMic() {
+  ws.send(JSON.stringify({
+    chunk_size: [5, 10, 5], wav_name: "h5",
+    is_speaking: false, mode: "2pass"
+  }));
+}</code></pre>
+                    </div>
+                    <div class="doc-note">💡 本项目使用 <code>recorder-core.js</code> 完成采集与重采样，参考 <code>main.js</code> 中的 <code>recProcess()</code> 与 <code>wsconnecter.js</code>。</div>
+                </div>
+
+                <!-- ===== Python 后端 ===== -->
+                <div class="doc-panel" data-panel="python">
+                    <h3>🐍 Python 后端（文件转写示例）</h3>
+                    <p>使用 <code>websockets</code> 库。安装：<code>pip install websockets</code></p>
+                    <div class="doc-code-wrap">
+                        <button class="doc-copy-btn" onclick="copyDocCode(this)">复制</button>
+                        <pre><code>import asyncio
+import json
+import wave
+import websockets
+
+SERVER = "ws://188.18.18.106:10095"
+
+async def transcribe(wav_path: str):
+    async with websockets.connect(SERVER, ping_interval=None) as ws:
+        # 1. 读取 WAV，获取采样率与 PCM 数据
+        wf = wave.open(wav_path, "rb")
+        sample_rate = wf.getframerate()
+        pcm_data = wf.readframes(wf.getnframes())   # 已跳过头部的 PCM
+        wf.close()
+
+        # 2. 发送配置帧（文件用 offline 模式）
+        config = {
+            "chunk_size": [5, 10, 5],
+            "wav_name": "test",
+            "is_speaking": True,
+            "chunk_interval": 10,
+            "itn": False,
+            "mode": "offline",
+            "wav_format": "pcm",
+            "audio_fs": sample_rate,
+            "hotwords": "竞业达 60\nhello world 40\n语音识别 50",  # 多个热词用 \n 换行
+        }
+        await ws.send(json.dumps(config))
+
+        # 3. 分块发送 PCM（每块约 10ms * N）
+        chunk = 10240
+        for i in range(0, len(pcm_data), chunk):
+            await ws.send(pcm_data[i:i + chunk])
+            await asyncio.sleep(0.005)
+
+        # 4. 发送结束信号
+        await ws.send(json.dumps({
+            "chunk_size": [5, 10, 5], "wav_name": "test",
+            "is_speaking": False, "mode": "offline",
+        }))
+
+        # 5. 接收结果
+        result = ""
+        async for message in ws:
+            msg = json.loads(message)
+            result += msg.get("text", "")
+            print("片段:", msg.get("text"), "| final:", msg.get("is_final"))
+            if msg.get("is_final"):
+                break
+        print("\n最终结果:", result)
+
+if __name__ == "__main__":
+    asyncio.run(transcribe("audio.wav"))</code></pre>
+                    </div>
+                    <div class="doc-note warn">⚠️ 若为 MP3/FLAC 等压缩格式，将 <code>wav_format</code> 设为 <code>"others"</code> 并直接发送整个文件字节，由服务端 ffmpeg 解码。</div>
+                </div>
+
+                <!-- ===== Android ===== -->
+                <div class="doc-panel" data-panel="android">
+                    <h3>🤖 Android（Kotlin + OkHttp）</h3>
+                    <p>使用 OkHttp 的 WebSocket，配合 <code>AudioRecord</code> 采集 16k PCM。依赖：<code>implementation("com.squareup.okhttp3:okhttp:4.12.0")</code></p>
+                    <div class="doc-code-wrap">
+                        <button class="doc-copy-btn" onclick="copyDocCode(this)">复制</button>
+                        <pre><code>import okhttp3.*
+import org.json.JSONObject
+import android.media.*
+
+class AsrClient {
+    private val client = OkHttpClient.Builder()
+        .pingInterval(0, java.util.concurrent.TimeUnit.SECONDS)
+        .build()
+    private var ws: WebSocket? = null
+    @Volatile private var recording = false
+
+    fun connect(url: String = "ws://188.18.18.106:10095") {
+        val request = Request.Builder().url(url).build()
+        ws = client.newWebSocket(request, object : WebSocketListener() {
+            override fun onOpen(webSocket: WebSocket, response: Response) {
+                // 发送配置帧
+                val config = JSONObject().apply {
+                    put("chunk_size", org.json.JSONArray(listOf(5, 10, 5)))
+                    put("wav_name", "android")
+                    put("is_speaking", true)
+                    put("chunk_interval", 10)
+                    put("itn", false)
+                    put("mode", "2pass")
+                    put("hotwords", "竞业达 60\nhello world 40\n语音识别 50")  // 多个热词用 \n 换行
+                }
+                webSocket.send(config.toString())
+                startRecording()
+            }
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                val msg = JSONObject(text)
+                val result = msg.optString("text")
+                val mode = msg.optString("mode")
+                // 2pass-online 追加，2pass-offline 替换
+                android.util.Log.d("ASR", "[$mode] $result")
+            }
+            override fun onFailure(webSocket: WebSocket, t: Throwable, r: Response?) {
+                android.util.Log.e("ASR", "error", t)
+            }
+        })
+    }
+
+    // 采集 16k/16bit/单声道 PCM 并发送
+    private fun startRecording() {
+        val sampleRate = 16000
+        val minBuf = AudioRecord.getMinBufferSize(
+            sampleRate,
+            AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT
+        )
+        val recorder = AudioRecord(
+            MediaRecorder.AudioSource.MIC, sampleRate,
+            AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT, minBuf
+        )
+        recording = true
+        recorder.startRecording()
+        Thread {
+            val buf = ByteArray(1920)   // 约 60ms
+            while (recording) {
+                val n = recorder.read(buf, 0, buf.size)
+                if (n > 0) ws?.send(okio.ByteString.of(buf, 0, n))
+            }
+            recorder.stop(); recorder.release()
+        }.start()
+    }
+
+    fun stop() {
+        recording = false
+        val end = JSONObject().apply {
+            put("chunk_size", org.json.JSONArray(listOf(5, 10, 5)))
+            put("wav_name", "android")
+            put("is_speaking", false)
+            put("mode", "2pass")
+        }
+        ws?.send(end.toString())
+    }
+}</code></pre>
+                    </div>
+                    <div class="doc-note">💡 需在 <code>AndroidManifest.xml</code> 声明 <code>RECORD_AUDIO</code> 与 <code>INTERNET</code> 权限，并在运行时申请麦克风权限。本服务为 <code>ws://</code> 明文连接，需在 <code>AndroidManifest.xml</code> 中设置 <code>android:usesCleartextTraffic="true"</code>（或在 <code>network-security-config</code> 中允许对应域名的 cleartext），否则 Android 9+ 会拦截明文连接。</div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div id="toast" class="toast"></div>
+
+    <!-- ===== Footer ===== -->
+    <div class="footer">
+        Powered by <a href="https://github.com/modelscope/FunASR" target="_blank">FunASR</a> · JYD—ASR语音转写实时纠错系统
+    </div>
+
+    <!-- ===== Scripts ===== -->
+    <script src="recorder-core.js" charset="UTF-8"></script>
+    <script src="wav.js" charset="UTF-8"></script>
+    <script src="pcm.js" charset="UTF-8"></script>
+    <script src="wsconnecter.js" charset="UTF-8"></script>
+    <script src="main.js" charset="utf-8"></script>
+    <script>
+        /* ========== 热词保存 & 模板 ========== */
+
+        // 内置模板（只读，不可删除）
+        var BUILTIN_HOTWORD_TEMPLATES = {
+            'AI助教机3.0': [
+                '录制 60', '录像 60', '回放 60', '播放 60', '暂停 60',
+                '继续 60', '关闭 60', '快进 60', '回退 60', '往前 60',
+                '打开白板 60', '打开投屏 60', '关闭字幕 60', '你好小达 60',
+                '返回 60', '上一页 60', '回退 60', '再见 60',
+                '国戏课程 60', '卖水 60'
+            ].join('\n'),
+            'jyd': [
+                '竞业达 60', 'hello world 40', '赵健 60', '王瑞华 60',
+                '岳岩 60', '郭宇 60', '魏艳敏 60'
+            ].join('\n')
+        };
+
+        var LS_HOTWORDS = 'asr_hotwords';                       // 已保存的热词内容
+        var LS_CUSTOM_TEMPLATES = 'asr_hotword_templates';      // 自定义模板 {name: content}
+        var LS_BUILTIN_OVERRIDES = 'asr_hotword_builtin_over';  // 内置模板的用户修改 {name: content}
+
+        function showToast(msg, type) {
+            var t = document.getElementById('toast');
+            if (!t) return;
+            t.textContent = msg;
+            t.className = 'toast show' + (type ? ' ' + type : '');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(function () {
+                t.className = 'toast' + (type ? ' ' + type : '');
+            }, 2200);
+        }
+
+        function getCustomTemplates() {
+            try {
+                var raw = localStorage.getItem(LS_CUSTOM_TEMPLATES);
+                var obj = raw ? JSON.parse(raw) : {};
+                return (obj && typeof obj === 'object') ? obj : {};
+            } catch (_) { return {}; }
+        }
+
+        function saveCustomTemplates(obj) {
+            try {
+                localStorage.setItem(LS_CUSTOM_TEMPLATES, JSON.stringify(obj));
+                return true;
+            } catch (e) {
+                showToast('保存失败：浏览器存储不可用', 'error');
+                return false;
+            }
+        }
+
+        // 内置模板的用户修改（覆盖内容）
+        function getBuiltinOverrides() {
+            try {
+                var raw = localStorage.getItem(LS_BUILTIN_OVERRIDES);
+                var obj = raw ? JSON.parse(raw) : {};
+                return (obj && typeof obj === 'object') ? obj : {};
+            } catch (_) { return {}; }
+        }
+
+        function saveBuiltinOverrides(obj) {
+            try {
+                localStorage.setItem(LS_BUILTIN_OVERRIDES, JSON.stringify(obj));
+                return true;
+            } catch (e) {
+                showToast('保存失败：浏览器存储不可用', 'error');
+                return false;
+            }
+        }
+
+        // 内置模板的当前有效内容：优先用户修改，否则用代码默认值
+        function getBuiltinContent(name) {
+            var over = getBuiltinOverrides();
+            if (over[name] != null) return over[name];
+            return BUILTIN_HOTWORD_TEMPLATES[name] != null ? BUILTIN_HOTWORD_TEMPLATES[name] : null;
+        }
+
+        // 当前选中的模板 value（'builtin::xxx' / 'custom::xxx' / null）
+        var _hwSelected = null;
+
+        // 取模板显示名（去掉前缀）
+        function templateLabel(value) {
+            if (!value) return '选择模板';
+            if (value.indexOf('builtin::') === 0) return value.slice(9);
+            if (value.indexOf('custom::') === 0) return value.slice(8);
+            return '选择模板';
+        }
+
+        // 构建自定义下拉列表（内置 + 自定义 + 新增项）
+        function rebuildTemplateSelect(selectedName) {
+            _hwSelected = selectedName || null;
+            var menu = document.getElementById('hwDropdownMenu');
+            var toggle = document.getElementById('hwDropdownToggle');
+            if (!menu || !toggle) return;
+            menu.innerHTML = '';
+
+            var addOption = function (value, label, deletable) {
+                var row = document.createElement('div');
+                row.className = 'hw-option' + (value === _hwSelected ? ' selected' : '');
+                row.setAttribute('data-value', value);
+                row.onclick = function () { selectHwOption(value); };
+
+                var lbl = document.createElement('span');
+                lbl.className = 'hw-option-label';
+                lbl.textContent = label;
+                row.appendChild(lbl);
+
+                if (deletable) {
+                    var del = document.createElement('button');
+                    del.type = 'button';
+                    del.className = 'hw-option-del';
+                    del.textContent = '✕';
+                    del.title = '删除该模板';
+                    del.onclick = function (e) {
+                        e.stopPropagation();
+                        deleteHwTemplate(value);
+                    };
+                    row.appendChild(del);
+                }
+                menu.appendChild(row);
+            };
+
+            Object.keys(BUILTIN_HOTWORD_TEMPLATES).forEach(function (name) {
+                addOption('builtin::' + name, name, false);
+            });
+
+            var custom = getCustomTemplates();
+            Object.keys(custom).forEach(function (name) {
+                addOption('custom::' + name, name, true);
+            });
+
+            // 新增模板项
+            var add = document.createElement('div');
+            add.className = 'hw-option hw-option-add';
+            add.textContent = '+ 新增模板...';
+            add.onclick = function () { selectHwOption('__add__'); };
+            menu.appendChild(add);
+
+            toggle.textContent = templateLabel(_hwSelected);
+        }
+
+        function toggleHotwordDropdown(event) {
+            if (event) event.stopPropagation();
+            var dd = document.getElementById('hwDropdown');
+            if (dd) dd.classList.toggle('open');
+        }
+
+        function closeHotwordDropdown() {
+            var dd = document.getElementById('hwDropdown');
+            if (dd) dd.classList.remove('open');
+        }
+
+        // 点击外部关闭下拉
+        document.addEventListener('click', function (e) {
+            var dd = document.getElementById('hwDropdown');
+            if (dd && !dd.contains(e.target)) closeHotwordDropdown();
+        });
+
+        // 选择某项：普通模板→载入；「+ 新增模板」→ 另存流程
+        function selectHwOption(value) {
+            closeHotwordDropdown();
+
+            if (value === '__add__') {
+                saveAsHotwordTemplate();
+                return;
+            }
+
+            var content = getTemplateContent(value);
+            if (content == null) return;
+            _hwSelected = value;
+            var ta = document.getElementById('varHot');
+            ta.value = content;
+            document.getElementById('hwDropdownToggle').textContent = templateLabel(value);
+            // 刷新选中高亮
+            var menu = document.getElementById('hwDropdownMenu');
+            if (menu) {
+                menu.querySelectorAll('.hw-option').forEach(function (o) {
+                    o.classList.toggle('selected', o.getAttribute('data-value') === value);
+                });
+            }
+            showToast('已载入模板「' + templateLabel(value) + '」', 'success');
+        }
+
+        // 删除自定义模板
+        function deleteHwTemplate(value) {
+            if (!value || value.indexOf('custom::') !== 0) return;
+            var name = value.slice(8);
+            if (!confirm('确定删除模板「' + name + '」？此操作不可恢复。')) return;
+            var custom = getCustomTemplates();
+            delete custom[name];
+            if (!saveCustomTemplates(custom)) return;
+            // 若删除的是当前选中项，选中回退到第一个内置模板
+            var stillSelected = (_hwSelected === value) ? null : _hwSelected;
+            rebuildTemplateSelect(stillSelected);
+            showToast('已删除模板「' + name + '」', 'success');
+        }
+
+        function getTemplateContent(value) {
+            if (!value) return null;
+            if (value.indexOf('builtin::') === 0) {
+                return getBuiltinContent(value.slice(9));
+            }
+            if (value.indexOf('custom::') === 0) {
+                var custom = getCustomTemplates();
+                return custom[value.slice(8)] != null ? custom[value.slice(8)] : null;
+            }
+            return null;
+        }
+
+        // 保存当前热词：刷新后自动恢复；若当前选中自定义模板，则同步更新该模板内容
+        function saveHotwords() {
+            var ta = document.getElementById('varHot');
+            try {
+                localStorage.setItem(LS_HOTWORDS, ta.value);
+            } catch (e) {
+                showToast('保存失败：浏览器存储不可用', 'error');
+                return;
+            }
+
+            // 选中自定义模板 → 更新该模板内容
+            if (_hwSelected && _hwSelected.indexOf('custom::') === 0) {
+                var cname = _hwSelected.slice(8);
+                var custom = getCustomTemplates();
+                custom[cname] = ta.value;
+                if (!saveCustomTemplates(custom)) return;
+                updateSavedHint();
+                showToast('已保存并更新模板「' + cname + '」', 'success');
+                return;
+            }
+
+            // 选中内置模板 → 把修改作为覆盖内容保存（刷新后仍生效）
+            if (_hwSelected && _hwSelected.indexOf('builtin::') === 0) {
+                var bname = _hwSelected.slice(9);
+                var over = getBuiltinOverrides();
+                over[bname] = ta.value;
+                if (!saveBuiltinOverrides(over)) return;
+                updateSavedHint();
+                showToast('已保存并更新模板「' + bname + '」', 'success');
+                return;
+            }
+
+            updateSavedHint();
+            showToast('热词已保存', 'success');
+        }
+
+        // 新增一个空模板：创建后选中它并清空文本框，等待用户输入热词
+        function saveAsHotwordTemplate() {
+            var name = prompt('请输入模板名称：');
+            if (name == null) return;
+            name = name.trim();
+            if (!name) {
+                showToast('模板名称不能为空', 'error');
+                return;
+            }
+            if (BUILTIN_HOTWORD_TEMPLATES.hasOwnProperty(name)) {
+                showToast('该名称与内置模板重名，请换一个', 'error');
+                return;
+            }
+            var custom = getCustomTemplates();
+            if (custom.hasOwnProperty(name) &&
+                !confirm('已存在同名模板「' + name + '」，是否覆盖为空模板？')) {
+                return;
+            }
+            custom[name] = '';                 // 新模板默认无热词
+            if (!saveCustomTemplates(custom)) return;
+            rebuildTemplateSelect('custom::' + name);
+            var ta = document.getElementById('varHot');
+            if (ta) ta.value = '';             // 清空文本框，等待输入
+            showToast('已新建空模板「' + name + '」，请输入热词后点击保存', 'success');
+        }
+
+        function updateSavedHint() {
+            var hint = document.getElementById('hotwordSavedHint');
+            if (hint) hint.textContent = localStorage.getItem(LS_HOTWORDS) != null ? '已保存' : '';
+        }
+
+        // 初始化：每次进入都默认选中并载入「AI助教机3.0」模板
+        (function initHotwords() {
+            function boot() {
+                var ta = document.getElementById('varHot');
+                var defaultKey = 'builtin::' + Object.keys(BUILTIN_HOTWORD_TEMPLATES)[0];
+                rebuildTemplateSelect(defaultKey);
+                var content = getTemplateContent(defaultKey);
+                if (ta && content != null) ta.value = content;
+                updateSavedHint();
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', boot);
+            } else {
+                boot();
+            }
+        })();
+
+        /* ========== 接口文档弹窗 ========== */
+
+        function openApiDoc() {
+            // 文档对外公布的调用地址固定为 ws://188.18.18.106:10095，
+            // 与前端输入框的默认值（wss，仅本地方便）相互独立，故此处不再同步输入框地址。
+            document.getElementById('doc_modal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeApiDoc() {
+            document.getElementById('doc_modal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function switchDocTab(name) {
+            document.querySelectorAll('.doc-tab').forEach(function (t) {
+                t.classList.toggle('active', t.getAttribute('data-tab') === name);
+            });
+            document.querySelectorAll('.doc-panel').forEach(function (p) {
+                p.classList.toggle('active', p.getAttribute('data-panel') === name);
+            });
+            // 切换标签后滚动回顶部
+            var body = document.querySelector('.doc-modal-body');
+            if (body) body.scrollTop = 0;
+        }
+
+        function copyDocCode(btn) {
+            var pre = btn.parentElement.querySelector('pre');
+            if (!pre) return;
+            var text = pre.innerText || pre.textContent || '';
+            var done = function () {
+                var orig = btn.textContent;
+                btn.textContent = '✓ 已复制';
+                setTimeout(function () { btn.textContent = orig; }, 1500);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+            } else {
+                fallbackCopy(text, done);
+            }
+        }
+
+        function fallbackCopy(text, cb) {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); } catch (_) {}
+            document.body.removeChild(ta);
+            if (cb) cb();
+        }
+
+        // Esc 关闭弹窗
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeApiDoc();
+                closeIntentReference();
+                closeSettingsPanel();
+            }
+        });
+
+        /* ========== 深色/浅色模式 ========== */
+
+        var LS_THEME = 'asr_theme';
+
+        /** 当前是否深色 */
+        function isDarkTheme() {
+            return document.documentElement.getAttribute('data-theme') === 'dark';
+        }
+
+        /** 应用主题；persist=false 时不写 localStorage（用于跟随系统变化） */
+        function applyTheme(theme, persist) {
+            const dark = theme === 'dark';
+            if (dark) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+                btn.title = dark ? '切换到浅色模式' : '切换到深色模式';
+            }
+
+            if (persist !== false) {
+                try {
+                    localStorage.setItem(LS_THEME, theme);
+                } catch (e) {
+                    console.warn('无法保存主题到 localStorage:', e);
+                }
+            }
+        }
+
+        /** 点击图标切换深浅色 */
+        function toggleTheme() {
+            const next = isDarkTheme() ? 'light' : 'dark';
+            applyTheme(next, true);
+            showToast(next === 'dark' ? '已切换到深色模式' : '已切换到浅色模式', 'success');
+        }
+
+        (function initTheme() {
+            function boot() {
+                // data-theme 已由 <body> 顶部的前置脚本设置，这里只同步按钮状态
+                applyTheme(isDarkTheme() ? 'dark' : 'light', false);
+
+                // 未手动选择过时，跟随系统主题变化
+                if (window.matchMedia) {
+                    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+                    const onChange = function (e) {
+                        let saved = null;
+                        try { saved = localStorage.getItem(LS_THEME); } catch (_) {}
+                        if (!saved) applyTheme(e.matches ? 'dark' : 'light', false);
+                    };
+                    if (mq.addEventListener) mq.addEventListener('change', onChange);
+                    else if (mq.addListener) mq.addListener(onChange);
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', boot);
+            } else {
+                boot();
+            }
+        })();
+
+        /* ========== 设置面板控制 ========== */
+
+        function toggleSettingsPanel() {
+            const panel = document.getElementById('settings_panel');
+            if (panel) {
+                panel.classList.toggle('open');
+                if (panel.classList.contains('open')) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = '';
+                }
+            }
+        }
+
+        function closeSettingsPanel() {
+            const panel = document.getElementById('settings_panel');
+            if (panel) {
+                panel.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function switchSettingsTab(tabName) {
+            // 切换 tab 按钮状态
+            document.querySelectorAll('.settings-tab').forEach(function (tab) {
+                tab.classList.toggle('active', tab.getAttribute('data-tab') === tabName);
+            });
+            // 切换内容面板
+            document.querySelectorAll('.settings-panel-content').forEach(function (panel) {
+                panel.classList.toggle('active', panel.getAttribute('data-panel') === tabName);
+            });
+            // 切换后滚动到顶部
+            const contentArea = document.querySelector('.settings-content');
+            if (contentArea) contentArea.scrollTop = 0;
+        }
+
+        /* ========== Intent Reference Modal ========== */
+
+        function toggleIntentConfig() {
+            // 新版：直接打开设置面板
+            toggleSettingsPanel();
+        }
+
+        function closeIntentConfig() {
+            // 兼容旧版调用
+            closeSettingsPanel();
+        }
+
+        function scrollToIntentLog() {
+            const logCard = document.getElementById('intentLogCard');
+            if (logCard) {
+                logCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                closeIntentConfig();
+            }
+        }
+
+        function openIntentReference() {
+            document.getElementById('intent_ref_modal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+            // 清空搜索框
+            const searchInput = document.getElementById('intentSearchInput');
+            if (searchInput) {
+                searchInput.value = '';
+                filterIntents('');
+            }
+        }
+
+        function closeIntentReference() {
+            document.getElementById('intent_ref_modal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function filterIntents(query) {
+            const searchTerm = query.toLowerCase().trim();
+            const categories = document.querySelectorAll('.intent-category');
+
+            categories.forEach(category => {
+                const items = category.querySelectorAll('.intent-item');
+                let visibleCount = 0;
+
+                items.forEach(item => {
+                    const id = item.getAttribute('data-id');
+                    const name = item.getAttribute('data-name').toLowerCase();
+
+                    if (!searchTerm || id.includes(searchTerm) || name.includes(searchTerm)) {
+                        item.style.display = 'flex';
+                        visibleCount++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+
+                // 如果该分类下没有可见项，隐藏整个分类
+                category.style.display = visibleCount > 0 ? 'block' : 'none';
+            });
+        }
+
+        /* ========== AI 智能总结 ========== */
+
+        const GLM_API_KEY = 'a88ebe87c16e828468cd2addc27169ef.h3NsK4phN2xBQ9In';
+
+        /** 获取当前模式的转写纯文本，排除已有的总结块 */
+        function getAllTranscriptionText() {
+            const fileSection = document.getElementById('file_section');
+            const isFileMode = fileSection && fileSection.style.display !== 'none';
+            const el = isFileMode
+                ? document.getElementById('fileTranscriptionBody')
+                : document.getElementById('transcriptionBody');
+            if (!el) return '';
+            const clone = el.cloneNode(true);
+            const existing = clone.querySelector('.summary-block');
+            if (existing) existing.remove();
+            return (clone.innerText || clone.textContent || '').trim();
+        }
+
+        /** 获取总结结果要写入的容器 */
+        function getOutputContainer() {
+            const fileSection = document.getElementById('file_section');
+            const isFileMode = fileSection && fileSection.style.display !== 'none';
+            return isFileMode
+                ? document.getElementById('fileTranscriptionBody')
+                : document.getElementById('transcriptionBody');
+        }
+
+        /** 简单 HTML 转义防止 XSS */
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        /** 点击总结按钮 */
+        /** 轻量 Markdown 渲染：把 GLM 输出的 **加粗**、# 标题、- / 1. 列表转成正常排版 */
+        function renderMarkdown(md) {
+            const esc = (s) => escapeHtml(s);
+            // 行内：**加粗**、*斜体*、`代码`
+            const inline = (s) => esc(s)
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/(^|[^*])\*(?!\s)([^*]+?)\*(?!\*)/g, '$1<em>$2</em>')
+                .replace(/`([^`]+?)`/g, '<code>$1</code>');
+
+            const lines = String(md).replace(/\r\n/g, '\n').split('\n');
+            let html = '';
+            let listType = null; // 'ul' | 'ol'
+            const closeList = () => { if (listType) { html += '</' + listType + '>'; listType = null; } };
+
+            for (let raw of lines) {
+                const line = raw.replace(/\s+$/, '');
+                if (!line.trim()) { closeList(); continue; }
+
+                // 标题 # / ## / ###
+                const h = line.match(/^(#{1,6})\s+(.*)$/);
+                if (h) {
+                    closeList();
+                    const lvl = Math.min(h[1].length + 2, 6); // # → h3
+                    html += '<h' + lvl + '>' + inline(h[2]) + '</h' + lvl + '>';
+                    continue;
+                }
+
+                // 有序列表 1. xxx
+                const ol = line.match(/^\s*\d+[.、)]\s+(.*)$/);
+                if (ol) {
+                    if (listType !== 'ol') { closeList(); html += '<ol>'; listType = 'ol'; }
+                    html += '<li>' + inline(ol[1]) + '</li>';
+                    continue;
+                }
+
+                // 无序列表 - / * / •
+                const ul = line.match(/^\s*[-*•]\s+(.*)$/);
+                if (ul) {
+                    if (listType !== 'ul') { closeList(); html += '<ul>'; listType = 'ul'; }
+                    html += '<li>' + inline(ul[1]) + '</li>';
+                    continue;
+                }
+
+                closeList();
+                html += '<p>' + inline(line) + '</p>';
+            }
+            closeList();
+            return html;
+        }
+
+        /** 复制总结纯文本到剪贴板 */
+        function copySummary(triggerEl) {
+            const body = triggerEl.closest('.summary-block').querySelector('.summary-block-body');
+            const txt = body ? (body.innerText || body.textContent || '') : '';
+            if (!txt.trim()) return;
+            const done = () => {
+                const old = triggerEl.textContent;
+                triggerEl.textContent = '已复制';
+                triggerEl.classList.add('copied');
+                setTimeout(() => {
+                    triggerEl.textContent = old;
+                    triggerEl.classList.remove('copied');
+                }, 1500);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(txt).then(done).catch(() => fallbackCopy(txt, done));
+            } else {
+                fallbackCopy(txt, done);
+            }
+        }
+        function fallbackCopy(txt, done) {
+            const ta = document.createElement('textarea');
+            ta.value = txt;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); done(); } catch (_) {}
+            document.body.removeChild(ta);
+        }
+
+        /** 总结块头部（带右上角纯文本复制） */
+        function summaryHeaderHtml(withCopy) {
+            const copy = withCopy
+                ? '<span class="summary-copy" onclick="copySummary(this)" title="复制总结内容">复制</span>'
+                : '';
+            return '<div class="summary-block-header"><span>🤖 AI 智能总结</span>' + copy + '</div>';
+        }
+
+        /* ========== 意图识别服务 ========== */
+
+        const LS_INTENT_SERVICE_URL = 'asr_intent_service_url';
+        const LS_INTENT_TRIGGER_MODE = 'asr_intent_trigger_mode';
+        let intentServiceEnabled = true;
+        let intentResultsHistory = [];
+
+        // 意图ID到名称的映射表
+        const INTENT_ID_MAP = {
+            0: "无效指令",
+            1: "开始录制",
+            2: "暂停录制",
+            3: "结束录制",
+            4: "继续录制",
+            5: "打开回放模块",
+            6: "暂停播放",
+            7: "继续播放",
+            8: "关闭回放",
+            9: "快进",
+            10: "回退",
+            11: "打开白板",
+            12: "打开批注",
+            13: "关闭批注",
+            14: "远程互动",
+            15: "打开国戏课程",
+            16: "打开投屏",
+            17: "关闭投屏",
+            18: "退出AI",
+            19: "打开U盘",
+            20: "根据位置打开视频",
+            21: "根据名字时间打开视频",
+            22: "继续（上下文相关）",
+            23: "查询录制状态",
+            24: "查询录制时长",
+            25: "切换回放Tab",
+            26: "删除回放记录",
+            27: "开启AI字幕",
+            28: "关闭AI字幕",
+            29: "跳转至指定时间点",
+            30: "调节播放速度",
+            31: "调高音量",
+            32: "调低音量",
+            33: "切换我的课程/全部课程",
+            34: "按剧种筛选",
+            35: "搜索课程",
+            36: "开始学习",
+            37: "切换正常模式",
+            38: "切换伴奏模式",
+            39: "开启镜像动作",
+            40: "关闭镜像动作",
+            41: "台词跳转",
+            42: "语音助手唤醒",
+            43: "返回上一级"
+        };
+
+        /** 获取意图名称 */
+        function getIntentName(intentId) {
+            return INTENT_ID_MAP[intentId] || "未知意图";
+        }
+
+        /** 获取当前配置的意图识别服务地址 */
+        function getIntentServiceUrl() {
+            const input = document.getElementById('intentServiceUrl');
+            return input ? input.value.trim() : '';
+        }
+
+        /** 保存意图识别服务地址到 localStorage */
+        function saveIntentServiceUrl(url) {
+            try {
+                localStorage.setItem(LS_INTENT_SERVICE_URL, url);
+            } catch (e) {
+                console.warn('无法保存意图识别服务地址到 localStorage:', e);
+            }
+        }
+
+        /** 保存意图触发模式到 localStorage */
+        function saveIntentTriggerMode(mode) {
+            try {
+                localStorage.setItem(LS_INTENT_TRIGGER_MODE, mode);
+            } catch (e) {
+                console.warn('无法保存意图触发模式到 localStorage:', e);
+            }
+        }
+
+        /** 从 localStorage 恢复意图识别服务地址 */
+        function loadIntentServiceUrl() {
+            try {
+                const saved = localStorage.getItem(LS_INTENT_SERVICE_URL);
+                if (saved) {
+                    const input = document.getElementById('intentServiceUrl');
+                    if (input) input.value = saved;
+                }
+            } catch (e) {
+                console.warn('无法从 localStorage 读取意图识别服务地址:', e);
+            }
+        }
+
+        /** 从 localStorage 恢复意图触发模式 */
+        function loadIntentTriggerMode() {
+            try {
+                const saved = localStorage.getItem(LS_INTENT_TRIGGER_MODE);
+                if (saved) {
+                    const radio = document.querySelector(`input[name="intent_trigger_mode"][value="${saved}"]`);
+                    if (radio) radio.checked = true;
+                }
+            } catch (e) {
+                console.warn('无法从 localStorage 读取意图触发模式:', e);
+            }
+        }
+
+        /** 意图识别服务开关变化 */
+        function onIntentServiceChange() {
+            const enabled = document.querySelector('input[name="use_intent"]:checked').value === 'true';
+            intentServiceEnabled = enabled;
+            const statusEl = document.getElementById('intentServiceStatus');
+
+            if (enabled) {
+                const url = getIntentServiceUrl();
+                if (!url) {
+                    statusEl.textContent = '⚠ 请先配置服务地址';
+                    statusEl.style.color = 'var(--warning)';
+                    showToast('请先配置意图识别服务地址', 'error');
+                    // 自动切回关闭状态
+                    document.querySelector('input[name="use_intent"][value="false"]').checked = true;
+                    intentServiceEnabled = false;
+                    return;
+                }
+
+                statusEl.textContent = '✓ 意图识别已启用';
+                statusEl.style.color = 'var(--success-text)';
+                showToast('意图识别服务已启用', 'success');
+
+                // 保存地址
+                saveIntentServiceUrl(url);
+
+                // 自动测试连接
+                testIntentService();
+            } else {
+                statusEl.textContent = '';
+                showToast('意图识别服务已关闭', 'success');
+                intentResultsHistory = [];
+            }
+        }
+
+        /** 手动测试连接（按钮触发） */
+        async function testIntentServiceManually() {
+            const url = getIntentServiceUrl();
+            const statusEl = document.getElementById('intentServiceStatus');
+            const btn = document.getElementById('btnTestIntent');
+
+            if (!url) {
+                showToast('请先输入服务地址', 'error');
+                statusEl.textContent = '⚠ 请先输入服务地址';
+                statusEl.style.color = 'var(--warning)';
+                return;
+            }
+
+            // 保存地址
+            saveIntentServiceUrl(url);
+
+            // 禁用按钮，显示测试中
+            btn.disabled = true;
+            btn.textContent = '🔄 测试中...';
+            statusEl.textContent = '正在测试连接...';
+            statusEl.style.color = 'var(--text-secondary)';
+
+            const result = await testIntentService();
+
+            // 恢复按钮
+            btn.disabled = false;
+            btn.textContent = '🔍 测试连接';
+
+            if (result) {
+                showToast('连接测试成功！', 'success');
+            } else {
+                showToast('连接测试失败，请检查服务地址和网络', 'error');
+            }
+        }
+
+        /** 测试意图识别服务连通性 */
+        async function testIntentService() {
+            const url = getIntentServiceUrl();
+            const statusEl = document.getElementById('intentServiceStatus');
+
+            if (!url) {
+                statusEl.textContent = '⚠ 请先配置服务地址';
+                statusEl.style.color = 'var(--warning)';
+                return false;
+            }
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: '你好' }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.code === 200) {
+                        statusEl.textContent = '✓ 服务连接正常';
+                        statusEl.style.color = 'var(--success-text)';
+                        console.log('✅ 意图识别服务测试成功:', data);
+                        return true;
+                    } else {
+                        throw new Error(`服务返回错误: ${data.message || data.code}`);
+                    }
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (err) {
+                let errorMsg = '服务连接失败';
+                if (err.name === 'AbortError') {
+                    errorMsg = '连接超时（5秒）';
+                } else if (err.message.includes('Failed to fetch')) {
+                    errorMsg = '网络错误或跨域问题';
+                } else {
+                    errorMsg = err.message;
+                }
+
+                statusEl.textContent = `⚠ ${errorMsg}`;
+                statusEl.style.color = 'var(--warning)';
+                console.error('❌ 意图识别服务测试失败:', err);
+                return false;
+            }
+        }
+
+        /** 调用意图识别服务 */
+        async function callIntentService(text) {
+            if (!intentServiceEnabled || !text.trim()) return null;
+
+            const url = getIntentServiceUrl();
+            if (!url) {
+                console.warn('意图识别服务地址未配置');
+                return null;
+            }
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text.trim() }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.code === 200 && result.data) {
+                    // 记录意图识别结果
+                    const intentRecord = {
+                        text: text,
+                        intent_id: result.data.intent_id,
+                        timestamp: new Date().toLocaleTimeString(),
+                        latency_ms: result.latency_ms || 0,
+                        extra: result.data
+                    };
+                    intentResultsHistory.push(intentRecord);
+
+                    // 在控制台显示意图识别结果
+                    console.log('🎯 意图识别结果:', intentRecord);
+
+                    // 在界面上显示意图识别结果（可选）
+                    displayIntentResult(intentRecord);
+
+                    return result.data;
+                }
+
+                return null;
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('意图识别服务调用失败:', err);
+                }
+                return null;
+            }
+        }
+
+        /** 添加意图到日志 */
+        function addIntentToLog(record) {
+            const intentId = record.intent_id;
+
+            // 忽略无效指令(0)，不显示在页面上
+            if (intentId === 0) {
+                return;
+            }
+
+            // 检查是否开启了意图日志显示
+            const showLogRadio = document.querySelector('input[name="show_intent_log"]:checked');
+            const shouldShowLog = showLogRadio && showLogRadio.value === 'true';
+
+            if (shouldShowLog) {
+                // 显示日志卡片
+                const logCard = document.getElementById('intentLogCard');
+                if (logCard) {
+                    logCard.style.display = 'block';
+                }
+
+                const container = document.getElementById('intentLogContainer');
+                if (!container) return;
+
+                // 移除空状态提示
+                const emptyMsg = container.querySelector('.intent-log-empty');
+                if (emptyMsg) {
+                    emptyMsg.remove();
+                }
+
+                // 创建日志项
+                const logItem = document.createElement('div');
+                logItem.className = 'intent-log-item';
+
+                // 顶部：ID + 名称 + 时间
+                const topDiv = document.createElement('div');
+                topDiv.className = 'intent-log-top';
+
+                const leftDiv = document.createElement('div');
+                leftDiv.className = 'intent-log-left';
+
+                const idSpan = document.createElement('span');
+                idSpan.className = 'intent-log-id';
+                idSpan.textContent = intentId;
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'intent-log-name';
+                nameSpan.textContent = getIntentName(intentId);
+
+                leftDiv.appendChild(idSpan);
+                leftDiv.appendChild(nameSpan);
+
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'intent-log-time';
+                timeSpan.textContent = record.timestamp;
+
+                topDiv.appendChild(leftDiv);
+                topDiv.appendChild(timeSpan);
+
+                logItem.appendChild(topDiv);
+
+                // 原文
+                const textDiv = document.createElement('div');
+                textDiv.className = 'intent-log-text';
+                textDiv.textContent = `"${record.text}"`;
+                logItem.appendChild(textDiv);
+
+                // 额外信息（如果有）
+                if (record.extra) {
+                    const extraKeys = Object.keys(record.extra).filter(k => k !== 'intent_id');
+                    if (extraKeys.length > 0) {
+                        const extraDiv = document.createElement('div');
+                        extraDiv.className = 'intent-log-extra';
+                        const extraInfo = extraKeys.map(k => `${k}: ${JSON.stringify(record.extra[k])}`).join(' | ');
+                        extraDiv.textContent = extraInfo;
+                        logItem.appendChild(extraDiv);
+                    }
+                }
+
+                // 插入到最前面
+                container.insertBefore(logItem, container.firstChild);
+
+                // 限制日志数量（最多保留50条）
+                const items = container.querySelectorAll('.intent-log-item');
+                if (items.length > 50) {
+                    items[items.length - 1].remove();
+                }
+            }
+
+            // 始终添加到历史显示面板（无论日志是否开启）
+            addToIntentHistory(record);
+        }
+
+        /** 显示意图日志开关改变事件 */
+        function onShowIntentLogChange() {
+            const showLogRadio = document.querySelector('input[name="show_intent_log"]:checked');
+            const shouldShow = showLogRadio && showLogRadio.value === 'true';
+
+            const logCard = document.getElementById('intentLogCard');
+            if (logCard) {
+                if (shouldShow) {
+                    // 如果有日志内容，显示日志卡片
+                    const container = document.getElementById('intentLogContainer');
+                    const hasLogs = container && !container.querySelector('.intent-log-empty');
+                    if (hasLogs) {
+                        logCard.style.display = 'block';
+                    }
+                } else {
+                    // 关闭时隐藏日志卡片
+                    logCard.style.display = 'none';
+                }
+            }
+        }
+
+        /** 添加意图到历史显示面板 */
+        function addToIntentHistory(record) {
+            const intentId = record.intent_id;
+            const intentName = getIntentName(intentId);
+
+            // 显示历史面板
+            const historyPanel = document.getElementById('intentHistoryPanel');
+            const historyList = document.getElementById('intentHistoryList');
+            if (!historyPanel || !historyList) return;
+
+            historyPanel.style.display = 'block';
+
+            // 检查是否已存在相同ID的意图（避免重复显示）
+            const existingItem = historyList.querySelector(`[data-intent-id="${intentId}"]`);
+            if (existingItem) {
+                // 已存在，只更新时间戳
+                existingItem.title = `意图ID: ${intentId}\n意图名称: ${intentName}\n最后触发: ${record.timestamp}`;
+                return;
+            }
+
+            // 创建历史项
+            const historyItem = document.createElement('div');
+            historyItem.className = 'intent-history-item';
+            historyItem.setAttribute('data-intent-id', intentId);
+            historyItem.title = `意图ID: ${intentId}\n意图名称: ${intentName}\n触发时间: ${record.timestamp}`;
+            historyItem.onclick = function() {
+                openIntentReference();
+                // 可选：自动搜索该意图
+                setTimeout(() => {
+                    const searchInput = document.getElementById('intentSearchInput');
+                    if (searchInput) {
+                        searchInput.value = intentId;
+                        filterIntents(intentId.toString());
+                    }
+                }, 300);
+            };
+
+            const idSpan = document.createElement('span');
+            idSpan.className = 'intent-history-item-id';
+            idSpan.textContent = `[${intentId}]`;
+
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'intent-history-item-name';
+            nameSpan.textContent = intentName;
+
+            historyItem.appendChild(idSpan);
+            historyItem.appendChild(nameSpan);
+
+            // 插入到列表开头
+            historyList.insertBefore(historyItem, historyList.firstChild);
+        }
+
+        /** 清空意图日志 */
+        function clearIntentLog() {
+            const container = document.getElementById('intentLogContainer');
+            if (!container) return;
+
+            container.innerHTML = '<div class="intent-log-empty">暂无意图触发记录</div>';
+
+            // 隐藏日志卡片
+            const logCard = document.getElementById('intentLogCard');
+            if (logCard) {
+                logCard.style.display = 'none';
+            }
+
+            // 清空历史显示面板
+            const historyPanel = document.getElementById('intentHistoryPanel');
+            const historyList = document.getElementById('intentHistoryList');
+            if (historyPanel && historyList) {
+                historyPanel.style.display = 'none';
+                historyList.innerHTML = '';
+            }
+        }
+
+        function scrollToIntentLog() {
+            const logCard = document.getElementById('intentLogCard');
+            if (logCard) {
+                logCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                closeIntentConfig();
+            }
+        }
+
+        /** 在转写文本后显示意图识别结果 */
+        function displayIntentResult(record) {
+            // 忽略无效指令(0)，不在转写区显示标签
+            if (record.intent_id === 0) {
+                console.log('意图识别：无效指令，不显示');
+                return;
+            }
+
+            // 添加到日志（如果开启了日志显示）
+            addIntentToLog(record);
+
+            // 在转写区域实时显示意图触发内容
+            const isFileMode = document.getElementById('file_section')?.style.display !== 'none';
+            const bodyEl = isFileMode
+                ? document.getElementById('fileTranscriptionBody')
+                : document.getElementById('transcriptionBody');
+
+            if (bodyEl) {
+                // 创建意图提示标签
+                const intentLabel = document.createElement('div');
+                intentLabel.className = 'intent-inline-label';
+                intentLabel.innerHTML = `🎯 [${record.intent_id}] ${getIntentName(record.intent_id)}`;
+                intentLabel.title = `意图ID: ${record.intent_id}\n意图名称: ${getIntentName(record.intent_id)}\n触发时间: ${record.timestamp}\n原文: ${record.text}`;
+
+                // 添加到转写区域
+                bodyEl.appendChild(intentLabel);
+
+                // 自动滚动到底部
+                bodyEl.scrollTop = bodyEl.scrollHeight;
+            }
+        }
+
+        // 页面加载时恢复保存的服务地址和触发模式
+        (function initIntentService() {
+            function boot() {
+                loadIntentServiceUrl();
+                loadIntentTriggerMode();
+
+                // 默认开启意图识别：同步内部状态与状态文案
+                const intentRadio = document.querySelector('input[name="use_intent"]:checked');
+                intentServiceEnabled = !intentRadio || intentRadio.value === 'true';
+                const statusEl = document.getElementById('intentServiceStatus');
+                if (intentServiceEnabled && statusEl && getIntentServiceUrl()) {
+                    statusEl.textContent = '✓ 意图识别已启用';
+                    statusEl.style.color = 'var(--success-text)';
+                }
+
+                // 监听触发模式变化，自动保存
+                document.querySelectorAll('input[name="intent_trigger_mode"]').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        saveIntentTriggerMode(this.value);
+                    });
+                });
+
+                // 监听意图日志显示开关变化
+                document.querySelectorAll('input[name="show_intent_log"]').forEach(radio => {
+                    radio.addEventListener('change', onShowIntentLogChange);
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', boot);
+            } else {
+                boot();
+            }
+        })();
+
+        async function summarizeText() {
+            const text = getAllTranscriptionText();
+            if (!text) {
+                alert('当前没有转写内容，请先进行语音识别或文件转写');
+                return;
+            }
+
+            const container = getOutputContainer();
+            const btns = document.querySelectorAll('.btn-summarize');
+            btns.forEach(b => b.classList.add('disabled'));
+
+            // 复用或新建总结块，追加到转写区底部
+            let block = container.querySelector('.summary-block');
+            if (!block) {
+                block = document.createElement('div');
+                block.className = 'summary-block';
+                container.appendChild(block);
+            }
+            block.innerHTML = summaryHeaderHtml(false)
+                + '<div class="summary-block-loading">'
+                + '<div class="summary-spinner"></div>正在总结中，请稍候…</div>';
+            block.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            try {
+                const resp = await fetch(
+                    'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + GLM_API_KEY
+                        },
+                        body: JSON.stringify({
+                            model: 'glm-4-flash',
+                            stream: true,
+                            messages: [{
+                                role: 'user',
+                                content: '请对以下语音转写内容进行简洁准确的总结，'
+                                    + '提炼主要观点、关键信息和重要细节，'
+                                    + '用清晰的中文分点列出：\n\n' + text
+                            }],
+                            max_tokens: 1024,
+                            temperature: 0.7
+                        })
+                    }
+                );
+
+                if (!resp.ok) {
+                    let errMsg = 'HTTP ' + resp.status;
+                    try { errMsg = (await resp.json()).error?.message || errMsg; } catch (_) {}
+                    throw new Error(errMsg);
+                }
+
+                // 建好内容节点，后续流式追加
+                block.innerHTML = summaryHeaderHtml(true)
+                    + '<div class="summary-block-body markdown-body" id="_summaryContent"></div>';
+                const contentEl = document.getElementById('_summaryContent');
+                let accumulated = '';
+
+                const reader  = resp.body.getReader();
+                const decoder = new TextDecoder();
+                let buf = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buf += decoder.decode(value, { stream: true });
+                    // SSE 以换行分隔，逐行处理，保留不完整行
+                    const lines = buf.split('\n');
+                    buf = lines.pop();
+
+                    for (const line of lines) {
+                        const trimmed = line.trim();
+                        if (!trimmed.startsWith('data:')) continue;
+                        const payload = trimmed.slice(5).trim();
+                        if (payload === '[DONE]') break;
+                        try {
+                            const chunk = JSON.parse(payload);
+                            const delta = chunk.choices?.[0]?.delta?.content;
+                            if (delta) {
+                                accumulated += delta;
+                                contentEl.innerHTML = renderMarkdown(accumulated);
+                                contentEl.dataset.raw = accumulated;
+                            }
+                        } catch (_) {}
+                    }
+                }
+
+            } catch (err) {
+                block.innerHTML = summaryHeaderHtml(false)
+                    + '<div class="summary-block-body" style="color:var(--danger);">❌ 总结失败：'
+                    + escapeHtml(err.message) + '</div>';
+            } finally {
+                btns.forEach(b => b.classList.remove('disabled'));
+            }
+        }
+    </script>
+
+</body>
+</html>
